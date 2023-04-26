@@ -35,9 +35,11 @@ namespace HamsterWorld.Models
    {
       //Внешний ключ (и первичный)
       public string UserLogin { get; set; } = "";
-
       //Навигационное свойство
       public User User { get; set; } = null!;
+
+      //Столбец
+      public DateTime RoleChangingTime { get; set; }
    }
 
    public class Store
@@ -69,8 +71,10 @@ namespace HamsterWorld.Models
    //Страна производитель
    public class Country
    {
+      //Первичный ключ
       public string Name { get; set; } = "";
 
+      //Навигационное свойство
       public List<Product>? ProductsFromThisCountry { get; set; }
    }
    public class Product
@@ -162,6 +166,6 @@ namespace HamsterWorld.Models
 
       //Столбцы
       public string Content { get; set; } = "";
-      public DateTime WritingDate { get; set; } = DateTime.UtcNow;
+      public DateTime WritingDate { get; set; }
    }
 }

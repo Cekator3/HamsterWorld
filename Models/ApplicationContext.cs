@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace HamsterWorld.Models
 {
@@ -26,18 +27,18 @@ namespace HamsterWorld.Models
 
       protected override void OnModelCreating(ModelBuilder modelBuilder)
       {
-         //Использование fluent API
-         base.OnModelCreating(modelBuilder);
-
          //При работе с цепочкой наследования будет использоваться подход TPH (Table per hierarchy)
          modelBuilder.Entity<Product>().UseTphMappingStrategy();  
          ConfigurePrimaryKeys(modelBuilder);
          ConfigureForeignKeys(modelBuilder);
+         ConfigureIndexes(modelBuilder);
+         ConfigureDefaultValues(modelBuilder);
+         InitializeDatabaseWithValues(modelBuilder);
       }
 
       protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
       {
-         optionsBuilder.LogTo(Console.WriteLine);
+         optionsBuilder.LogTo(Console.WriteLine, new [] {RelationalEventId.CommandExecuted});
       }
 
 
@@ -85,7 +86,7 @@ namespace HamsterWorld.Models
                .HasOne(e => e.Role)
                .WithMany(e => e.Users)
                .HasForeignKey(u => u.RoleName)
-               .OnDelete(DeleteBehavior.SetNull);
+               .OnDelete(DeleteBehavior.Restrict);
 
          //Главная сущность User связана с зависимой сущностью UserWithChangedRole в отношении один к одному. Зависимая сущность имеет вторичный ключ - u.UserLogin
          modelBuilder.Entity<User>()
@@ -109,7 +110,8 @@ namespace HamsterWorld.Models
          modelBuilder.Entity<Country>()
                .HasMany<Product>(e => e.ProductsFromThisCountry)
                .WithOne()
-               .HasForeignKey(e => e.CountryName);
+               .HasForeignKey(e => e.CountryName)
+               .OnDelete(DeleteBehavior.Restrict);
 
          //Главная сущность ShoppingList связана с зависимой сущностью ItemOfShoppingList в отношении один ShoppingList ко многим Item. Зависимая сущностью имеет вторичный ключ - e.ShoppingListId
          modelBuilder.Entity<ShoppingList>()
@@ -123,7 +125,7 @@ namespace HamsterWorld.Models
                .WithOne(e => e.Product)
                .HasForeignKey(e => e.ProductId);
 
-          //Главная сущность Product связана с зависимой сущностью Product в отношении один Product ко многим Picture. Зависимая сущность имеет вторичный ключ - e.ProductId
+          //Главная сущность Product связана с зависимой сущностью Pictures в отношении один Product ко многим Picture. Зависимая сущность имеет вторичный ключ - e.ProductId
           modelBuilder.Entity<Product>()
                .HasMany(p => p.Pictures)
                .WithOne()
@@ -139,13 +141,54 @@ namespace HamsterWorld.Models
          modelBuilder.Entity<User>()
                .HasMany<CommentToProduct>(e => e.Comments)
                .WithOne()
-               .HasForeignKey(e => e.UserLogin);
+               .HasForeignKey(e => e.UserLogin)
+               .OnDelete(DeleteBehavior.SetNull);
 
           //Главная сущность CommentToProduct связана с зависимой сущностью CommentToProduct в отношении один комментарий может быть родителем многих комментариев. Зависимая сущность имеет вторичный ключ - e.ParentCommentId
          modelBuilder.Entity<CommentToProduct>()
                .HasMany<CommentToProduct>(e => e.ChildrenComments)
                .WithOne(e => e.ParentComment)
                .HasForeignKey(e => e.ParentCommentId);
+      }
+
+      void ConfigureIndexes(ModelBuilder modelBuilder)
+      {
+         modelBuilder.Entity<User>()
+               .HasIndex(u => u.Email);
+
+         modelBuilder.Entity<Product>()
+               .HasIndex(u => u.Model);
+      }
+
+      void ConfigureDefaultValues(ModelBuilder modelBuilder)
+      {
+         modelBuilder.Entity<UserWithChangedRole>()
+               .Property(u => u.RoleChangingTime)
+               .HasDefaultValue(DateTime.UtcNow);
+
+         modelBuilder.Entity<CommentToProduct>()
+               .Property(c => c.WritingDate)
+               .HasDefaultValue(DateTime.UtcNow);
+      }
+
+      void InitializeDatabaseWithValues(ModelBuilder modelBuilder)
+      {
+         modelBuilder.Entity<Role>().HasData(
+               new Role() {Name = "Admin"},
+               new Role() {Name = "StoreAdmin"},
+               new Role() {Name = "User"}
+         );
+
+         //TODO Password Hash для админа
+         modelBuilder.Entity<User>().HasData(
+               new User() {Login = "Admin", RoleName = "Admin", Email = "admin@admin", PasswordHash="", money=99999, }
+         );
+
+         modelBuilder.Entity<Country>().HasData(
+               new Country() {Name="Россия"},
+               new Country() {Name="Япония"},
+               new Country() {Name="Китай"}
+         );
       }
    }
 }
