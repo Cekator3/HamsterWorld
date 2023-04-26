@@ -4,6 +4,7 @@ namespace HamsterWorld.Models
 {
    public class ApplicationContext : DbContext
    {
+      //TODO metanit и индексы
       public DbSet<User> Users { get; set; } = null!;
       public DbSet<Role> Roles { get; set; } = null!;
       public DbSet<UserWithChangedRole> Blacklist { get; set; } = null!;
@@ -13,6 +14,7 @@ namespace HamsterWorld.Models
       public DbSet<CPU> CPUs { get; set; } = null!;
       public DbSet<GPU> GPUs { get; set; } = null!;
       public DbSet<RAM> RAMs { get; set; } = null!;
+      public DbSet<ProductPicture> ProductsPictures { get; set; } = null!;
       public DbSet<ShoppingList> ShoppingLists { get; set; } = null!;
       public DbSet<CommentToProduct> CommentsToProducts { get; set; } = null!;
 
@@ -61,6 +63,9 @@ namespace HamsterWorld.Models
                .HasKey(c => c.Name);
 
          modelBuilder.Entity<Product>()
+               .HasKey(p => p.Id);
+
+         modelBuilder.Entity<ProductPicture>()
                .HasKey(p => p.Id);
 
          modelBuilder.Entity<ShoppingList>()
@@ -116,6 +121,12 @@ namespace HamsterWorld.Models
           modelBuilder.Entity<Product>()
                .HasMany<ItemOfShoppingList>()
                .WithOne(e => e.Product)
+               .HasForeignKey(e => e.ProductId);
+
+          //Главная сущность Product связана с зависимой сущностью Product в отношении один Product ко многим Picture. Зависимая сущность имеет вторичный ключ - e.ProductId
+          modelBuilder.Entity<Product>()
+               .HasMany(p => p.Pictures)
+               .WithOne()
                .HasForeignKey(e => e.ProductId);
 
           //Главная сущность Product связана с зависимой сущностью CommentToProduct в отношении один Product ко многим Comment. Зависимая сущность имеет вторичный клю - e.ProductId

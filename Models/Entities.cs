@@ -20,6 +20,7 @@ namespace HamsterWorld.Models
       public string PasswordHash { get; set; } = "";
       [Column(TypeName = "decimal(18,8)")]
       public decimal money { get; set; }
+      public string? UserPicture { get; set; }
    }
    public class Role
    {
@@ -79,8 +80,9 @@ namespace HamsterWorld.Models
 
       //Внешний ключ
       public string? CountryName { get; set; }
-      //Навигационное свойство
+      //Навигационные свойства
       public List<CommentToProduct>? Comments { get; set; }
+      public List<ProductPicture>? Pictures { get; set; }
 
       //Столбцы
       public string Model { get; set; } = "";
@@ -104,6 +106,18 @@ namespace HamsterWorld.Models
    {
       public string MemoryType { get; set; } = "";
       public int AmountOfMemory { get; set; }
+   }
+   public class ProductPicture
+   {
+      //Первичный ключ
+      public int Id { get; set; }
+
+      //Внешний ключ
+      public int ProductId { get; set; }
+
+      //Столбцы
+      public string Path { get; set; } = "";
+      public int OrderNumber { get; set; }
    }
 
    public class ShoppingList
