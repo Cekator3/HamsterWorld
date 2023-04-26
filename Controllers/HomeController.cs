@@ -7,10 +7,12 @@ namespace HamsterWorld.Controllers;
 public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
+    ApplicationContext _context;
 
-    public HomeController(ILogger<HomeController> logger)
+    public HomeController(ILogger<HomeController> logger, ApplicationContext context)
     {
         _logger = logger;
+        _context = context;
     }
 
     public IActionResult Index()

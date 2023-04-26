@@ -1,3 +1,6 @@
+using Microsoft.EntityFrameworkCore; 
+using HamsterWorld.Models;
+
 namespace HamsterWorld
 {
    public class Program
@@ -5,6 +8,9 @@ namespace HamsterWorld
       public static void Main(string[] args) 
       {
          var builder = WebApplication.CreateBuilder(args);
+
+         string connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
+         builder.Services.AddDbContext<ApplicationContext>(options => options.UseNpgsql(connectionString, x => x.UseNetTopologySuite()));
 
          // Service == Dependency
          builder.Services.AddControllersWithViews();
