@@ -5,7 +5,6 @@ namespace HamsterWorld.Models
 {
    public class ApplicationContext : DbContext
    {
-      //TODO metanit и индексы
       public DbSet<User> Users { get; set; } = null!;
       public DbSet<Role> Roles { get; set; } = null!;
       public DbSet<UserWithChangedRole> Blacklist { get; set; } = null!;
@@ -32,6 +31,7 @@ namespace HamsterWorld.Models
          ConfigurePrimaryKeys(modelBuilder);
          ConfigureForeignKeys(modelBuilder);
          ConfigureIndexes(modelBuilder);
+         ConfigureMoneyTypes(modelBuilder);
          ConfigureDefaultValues(modelBuilder);
          InitializeDatabaseWithValues(modelBuilder);
       }
@@ -160,15 +160,30 @@ namespace HamsterWorld.Models
                .HasIndex(u => u.Model);
       }
 
+      void ConfigureMoneyTypes(ModelBuilder modelBuilder)
+      {
+         modelBuilder.Entity<User>()
+               .Property(u => u.Money)
+               .HasColumnType("money");
+
+         modelBuilder.Entity<Product>()
+               .Property(p => p.Price)
+               .HasColumnType("money");
+
+         modelBuilder.Entity<ShoppingList>()
+               .Property(l => l.FinalPrice)
+               .HasColumnType("money");
+      }
+
       void ConfigureDefaultValues(ModelBuilder modelBuilder)
       {
          modelBuilder.Entity<UserWithChangedRole>()
                .Property(u => u.RoleChangingTime)
-               .HasDefaultValue(DateTime.UtcNow);
+               .HasDefaultValue(DateTime.UtcNow.ToUniversalTime());
 
          modelBuilder.Entity<CommentToProduct>()
                .Property(c => c.WritingDate)
-               .HasDefaultValue(DateTime.UtcNow);
+               .HasDefaultValue(DateTimeOffset.UtcNow.ToUniversalTime());
       }
 
       void InitializeDatabaseWithValues(ModelBuilder modelBuilder)
@@ -181,7 +196,7 @@ namespace HamsterWorld.Models
 
          //TODO Password Hash для админа
          modelBuilder.Entity<User>().HasData(
-               new User() {Login = "Admin", RoleName = "Admin", Email = "admin@admin", PasswordHash="", money=99999, }
+               new User() {Login = "Admin", RoleName = "Admin", Email = "Hamsterdreams@inbox.ru", PasswordHash="", Money=99999, }
          );
 
          modelBuilder.Entity<Country>().HasData(

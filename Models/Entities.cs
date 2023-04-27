@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using NetTopologySuite.Geometries;
 
 namespace HamsterWorld.Models
@@ -18,8 +16,7 @@ namespace HamsterWorld.Models
       //Столбцы
       public string Email { get; set; } = "";
       public string PasswordHash { get; set; } = "";
-      [Column(TypeName = "decimal(18,8)")]
-      public decimal money { get; set; }
+      public decimal Money { get; set; }
       public string? UserPicture { get; set; }
    }
    public class Role
@@ -45,7 +42,7 @@ namespace HamsterWorld.Models
    public class Store
    {
       //Первичный ключ
-      public int Id { get; set; }
+      public short Id { get; set; }
 
       //Столбцы
       public string Name { get; set; } = "";
@@ -60,7 +57,7 @@ namespace HamsterWorld.Models
    {
       //Внешние ключи (и первичные)
       public string UserLogin { get; set; } = "";
-      public int StoreId { get; set; }
+      public short StoreId { get; set; }
 
       //Навигационные свойства
       public User User { get; set; } = null!;
@@ -91,7 +88,6 @@ namespace HamsterWorld.Models
       //Столбцы
       public string Model { get; set; } = "";
       public string Description { get; set; } = "";
-      [Column(TypeName = "decimal(18,8)")]
       public decimal Price { get; set; }
    }
    public class CPU : Product
@@ -134,7 +130,6 @@ namespace HamsterWorld.Models
 
       //Столбцы
       public DateTime? TimeOfSale { get; set; }
-      [Column(TypeName = "decimal(18,8)")]
       public decimal FinalPrice { get; set; }
    }
    public class ItemOfShoppingList
@@ -166,6 +161,6 @@ namespace HamsterWorld.Models
 
       //Столбцы
       public string Content { get; set; } = "";
-      public DateTime WritingDate { get; set; }
+      public DateTimeOffset WritingDate { get; set; }
    }
 }
