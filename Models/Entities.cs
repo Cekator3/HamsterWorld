@@ -8,7 +8,7 @@ namespace HamsterWorld.Models
       public string Login { get; set; } = "";
       
       //Внешний ключ
-      public string RoleName { get; set; } = "";
+      public int RoleId { get; set; }
       //Навигационные свойства
       public Role Role { get; set; } = null!;
       public List<CommentToProduct>? Comments { get; set; }
@@ -22,10 +22,12 @@ namespace HamsterWorld.Models
    public class Role
    {
       //Первичный ключ
-      public string Name { get; set; } = "";
+      public int Id { get; set; }
       
       //Навигационное свойство
       public List<User>? Users { get; set; }
+      //Столбец
+      public string Name { get; set; } = "";
    }
    //Люди, попавшие сюда, должны заново пройти авторизацию.
    public class UserWithChangedRole

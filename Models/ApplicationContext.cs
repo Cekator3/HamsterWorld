@@ -49,7 +49,7 @@ namespace HamsterWorld.Models
                .HasKey(u => u.Login);
 
          modelBuilder.Entity<Role>()
-               .HasKey(r => r.Name);
+               .HasKey(r => r.Id);
 
          modelBuilder.Entity<UserWithChangedRole>()
                .HasKey(u => u.UserLogin);
@@ -85,7 +85,7 @@ namespace HamsterWorld.Models
          modelBuilder.Entity<User>()
                .HasOne(e => e.Role)
                .WithMany(e => e.Users)
-               .HasForeignKey(u => u.RoleName)
+               .HasForeignKey(u => u.RoleId)
                .OnDelete(DeleteBehavior.Restrict);
 
          //Главная сущность User связана с зависимой сущностью UserWithChangedRole в отношении один к одному. Зависимая сущность имеет вторичный ключ - u.UserLogin
@@ -188,15 +188,17 @@ namespace HamsterWorld.Models
 
       void InitializeDatabaseWithValues(ModelBuilder modelBuilder)
       {
-         modelBuilder.Entity<Role>().HasData(
-               new Role() {Name = "Admin"},
-               new Role() {Name = "StoreAdmin"},
-               new Role() {Name = "User"}
+            
+            Role adminRole = new Role() {Id=1, Name="Admin"};
+            modelBuilder.Entity<Role>().HasData(
+                  adminRole,
+                  new Role() {Id=2, Name = "StoreAdmin"},
+                  new Role() {Id=3, Name = "User"}
          );
 
          //TODO Password Hash для админа
          modelBuilder.Entity<User>().HasData(
-               new User() {Login = "Admin", RoleName = "Admin", Email = "Hamsterdreams@inbox.ru", PasswordHash="", Money=99999, }
+               new User() {Login = "Admin", RoleId = adminRole.Id, Email = "Hamsterdreams@inbox.ru", PasswordHash="", Money=99999, }
          );
 
          modelBuilder.Entity<Country>().HasData(
