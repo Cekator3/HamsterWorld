@@ -17,195 +17,212 @@ namespace HamsterWorld.Models
       public DbSet<ProductPicture> ProductsPictures { get; set; } = null!;
       public DbSet<ShoppingList> ShoppingLists { get; set; } = null!;
       public DbSet<CommentToProduct> CommentsToProducts { get; set; } = null!;
+      public DbSet<VoteToComment> CommentsVotes { get; set; } = null!;
 
       public ApplicationContext(DbContextOptions<ApplicationContext> options) : base(options)
       {
-         Database.EnsureDeleted();
-         Database.EnsureCreated();
+            Database.EnsureDeleted();
+            Database.EnsureCreated();
       }
 
       protected override void OnModelCreating(ModelBuilder modelBuilder)
       {
-         //При работе с цепочкой наследования будет использоваться подход TPH (Table per hierarchy)
-         modelBuilder.Entity<Product>().UseTphMappingStrategy();  
-         ConfigurePrimaryKeys(modelBuilder);
-         ConfigureForeignKeys(modelBuilder);
-         ConfigureIndexes(modelBuilder);
-         ConfigureMoneyTypes(modelBuilder);
-         ConfigureDefaultValues(modelBuilder);
-         InitializeDatabaseWithValues(modelBuilder);
+            //При работе с цепочкой наследования будет использоваться подход TPH (Table per hierarchy)
+            modelBuilder.Entity<Product>().UseTphMappingStrategy();  
+            modelBuilder.Entity<Comment>().UseTphMappingStrategy();  
+
+            ConfigurePrimaryKeys(modelBuilder);
+            ConfigureForeignKeys(modelBuilder);
+            ConfigureIndexes(modelBuilder);
+            ConfigureMoneyTypes(modelBuilder);
+            ConfigureDefaultValues(modelBuilder);
+            InitializeDatabaseWithValues(modelBuilder);
       }
 
       protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
       {
-         optionsBuilder.LogTo(Console.WriteLine, new [] {RelationalEventId.CommandExecuted});
+            optionsBuilder.LogTo(Console.WriteLine, new [] {RelationalEventId.CommandExecuted});
       }
 
 
 
       void ConfigurePrimaryKeys(ModelBuilder modelBuilder)
       {
-         modelBuilder.Entity<User>()
-               .HasKey(u => u.Login);
+            modelBuilder.Entity<User>()
+                  .HasKey(u => u.Id);
 
-         modelBuilder.Entity<Role>()
-               .HasKey(r => r.Id);
+            modelBuilder.Entity<Role>()
+                  .HasKey(r => r.Id);
 
-         modelBuilder.Entity<UserWithChangedRole>()
-               .HasKey(u => u.UserLogin);
+            modelBuilder.Entity<UserWithChangedRole>()
+                  .HasKey(u => u.UserId);
 
-         modelBuilder.Entity<Store>()
-               .HasKey(u => u.Id);
+            modelBuilder.Entity<Store>()
+                  .HasKey(u => u.Id);
 
-         modelBuilder.Entity<StoreAdministrator>()
-               .HasKey(a => new { a.UserLogin, a.StoreId });
+            modelBuilder.Entity<StoreAdministrator>()
+                  .HasKey(a => new { a.UserId, a.StoreId });
 
-         modelBuilder.Entity<Country>()
-               .HasKey(c => c.Name);
+            modelBuilder.Entity<Country>()
+                  .HasKey(c => c.Name);
 
-         modelBuilder.Entity<Product>()
-               .HasKey(p => p.Id);
+            modelBuilder.Entity<Product>()
+                  .HasKey(p => p.Id);
 
-         modelBuilder.Entity<ProductPicture>()
-               .HasKey(p => p.Id);
+            modelBuilder.Entity<ProductPicture>()
+                  .HasKey(p => p.Id);
 
-         modelBuilder.Entity<ShoppingList>()
-               .HasKey(s => s.Id);
+            modelBuilder.Entity<ShoppingList>()
+                  .HasKey(s => s.Id);
 
-         modelBuilder.Entity<ItemOfShoppingList>()
-               .HasKey(i => new {i.ShoppingListId, i.ProductId});
+            modelBuilder.Entity<ItemOfShoppingList>()
+                  .HasKey(i => new {i.ShoppingListId, i.ProductId});
 
-         modelBuilder.Entity<CommentToProduct>()
-               .HasKey(c => c.Id);
+            modelBuilder.Entity<Comment>()
+                  .HasKey(c => c.Id);
+
+            modelBuilder.Entity<VoteToComment>()
+                  .HasKey(k => new {k.AuthorId, k.CommentId});
       }
 
       void ConfigureForeignKeys(ModelBuilder modelBuilder)
       {
-         //Зависимая сущность User связана с главной сущностью Role в отношении одна Role ко многим User. У зависимой сущности вторичный ключ - u.RoleName
-         modelBuilder.Entity<User>()
-               .HasOne(e => e.Role)
-               .WithMany(e => e.Users)
-               .HasForeignKey(u => u.RoleId)
-               .OnDelete(DeleteBehavior.Restrict);
+            //Зависимая сущность User связана с главной сущностью Role в отношении одна Role ко многим User.
+            modelBuilder.Entity<User>()
+                  .HasOne<Role>(e => e.Role)
+                  .WithMany(e => e.Users)
+                  .HasForeignKey(u => u.RoleId)
+                  .OnDelete(DeleteBehavior.Restrict);
 
-         //Главная сущность User связана с зависимой сущностью UserWithChangedRole в отношении один к одному. Зависимая сущность имеет вторичный ключ - u.UserLogin
-         modelBuilder.Entity<User>()
-               .HasOne<UserWithChangedRole>()
-               .WithOne(u => u.User)
-               .HasForeignKey<UserWithChangedRole>(u => u.UserLogin);
+            //Главная сущность User связана с зависимой сущностью UserWithChangedRole в отношении один к одному.
+            modelBuilder.Entity<User>()
+                  .HasOne<UserWithChangedRole>()
+                  .WithOne()
+                  .HasForeignKey<UserWithChangedRole>(u => u.UserId);
 
-         //Главная сущность User связана с зависимой сущностю StoreAdmin в отношении один User ко многим StoreAdministrator. Зависимая сущность имеет вторичный ключ - a.UserLogin
-         modelBuilder.Entity<User>()
-               .HasMany<StoreAdministrator>()
-               .WithOne(e => e.User)
-               .HasForeignKey(a => a.UserLogin);
+            //Главная сущность User связана с зависимой сущностю StoreAdmin в отношении один User ко многим StoreAdministrator.
+            modelBuilder.Entity<User>()
+                  .HasMany<StoreAdministrator>()
+                  .WithOne()
+                  .HasForeignKey(a => a.UserId);
 
-         //Главная сущность Store связана с зависимой сущностю StoreAdmin в отношении один Store ко многим StoreAdmin. Зависимая сущность имеет вторичный ключ - s.UserLogin
-         modelBuilder.Entity<Store>()
-               .HasMany<StoreAdministrator>(e => e.Administrators)
-               .WithOne(e => e.Store)
-               .HasForeignKey(s => s.StoreId);
+            //Главная сущность Store связана с зависимой сущностю StoreAdmin в отношении один Store ко многим StoreAdmin.
+            modelBuilder.Entity<Store>()
+                  .HasMany<StoreAdministrator>(e => e.Administrators)
+                  .WithOne()
+                  .HasForeignKey(s => s.StoreId);
 
-         //Главная сущность Country связана с зависимой сущностью Product в отношении один Country ко многим Product. Зависимая сущность имеет вторичный ключ - e.CountryName
-         modelBuilder.Entity<Country>()
-               .HasMany<Product>(e => e.ProductsFromThisCountry)
-               .WithOne()
-               .HasForeignKey(e => e.CountryName)
-               .OnDelete(DeleteBehavior.Restrict);
+            //Главная сущность Country связана с зависимой сущностью Product в отношении один Country ко многим Product. 
+            modelBuilder.Entity<Country>()
+                  .HasMany<Product>(e => e.ProductsFromThisCountry)
+                  .WithOne()
+                  .HasForeignKey(e => e.CountryName)
+                  .OnDelete(DeleteBehavior.Restrict);
 
-         //Главная сущность ShoppingList связана с зависимой сущностью ItemOfShoppingList в отношении один ShoppingList ко многим Item. Зависимая сущностью имеет вторичный ключ - e.ShoppingListId
-         modelBuilder.Entity<ShoppingList>()
-               .HasMany<ItemOfShoppingList>(e => e.Buyings)
-               .WithOne(e => e.ShoppingList)
-               .HasForeignKey(e => e.ShoppingListId);
+            //Главная сущность ShoppingList связана с зависимой сущностью ItemOfShoppingList в отношении один ShoppingList ко многим Item. 
+            modelBuilder.Entity<ShoppingList>()
+                  .HasMany<ItemOfShoppingList>(e => e.Buyings)
+                  .WithOne()
+                  .HasForeignKey(e => e.ShoppingListId);
 
-         //Главная сущность Product связана с зависимой сущностью Item в отношении один Product ко многим Item. Зависимая сущность имеет вторичный ключ - e.ProductId
-          modelBuilder.Entity<Product>()
-               .HasMany<ItemOfShoppingList>()
-               .WithOne(e => e.Product)
-               .HasForeignKey(e => e.ProductId);
+            //Главная сущность Product связана с зависимой сущностью Item в отношении один Product ко многим Item.
+            modelBuilder.Entity<Product>()
+                  .HasMany<ItemOfShoppingList>()
+                  .WithOne(e => e.Product)
+                  .HasForeignKey(e => e.ProductId);
 
-          //Главная сущность Product связана с зависимой сущностью Pictures в отношении один Product ко многим Picture. Зависимая сущность имеет вторичный ключ - e.ProductId
-          modelBuilder.Entity<Product>()
-               .HasMany(p => p.Pictures)
-               .WithOne()
-               .HasForeignKey(e => e.ProductId);
+            //Главная сущность Product связана с зависимой сущностью Pictures в отношении один Product ко многим Picture.
+            modelBuilder.Entity<Product>()
+                  .HasMany<ProductPicture>(p => p.Pictures)
+                  .WithOne()
+                  .HasForeignKey(e => e.ProductId);
 
-          //Главная сущность Product связана с зависимой сущностью CommentToProduct в отношении один Product ко многим Comment. Зависимая сущность имеет вторичный клю - e.ProductId
-         modelBuilder.Entity<Product>()
-               .HasMany<CommentToProduct>(e => e.Comments)
-               .WithOne()
-               .HasForeignKey(e => e.ProductId);
+            //Главная сущность Product связана с зависимой сущностью CommentToProduct в отношении один Product ко многим Comment.
+            modelBuilder.Entity<Product>()
+                  .HasMany<CommentToProduct>(e => e.Comments)
+                  .WithOne()
+                  .HasForeignKey(e => e.ProductId);
 
-          //Главная сущность User связана с зависимой сущностью CommentToProduct в отношении один User ко многим Comment. Зависимая сущность имеет вторичный клю - e.UserLogin
-         modelBuilder.Entity<User>()
-               .HasMany<CommentToProduct>(e => e.Comments)
-               .WithOne()
-               .HasForeignKey(e => e.UserLogin)
-               .OnDelete(DeleteBehavior.SetNull);
+            //Главная сущность User связана с зависимой сущностью Comment в отношении один User ко многим Comment. 
+             modelBuilder.Entity<User>()
+                   .HasMany<Comment>(e => e.Comments)
+                   .WithOne(e => e.Author)
+                   .HasForeignKey(e => e.AuthorId)
+                   .OnDelete(DeleteBehavior.SetNull);
 
-          //Главная сущность CommentToProduct связана с зависимой сущностью CommentToProduct в отношении один комментарий может быть родителем многих комментариев. Зависимая сущность имеет вторичный ключ - e.ParentCommentId
-         modelBuilder.Entity<CommentToProduct>()
-               .HasMany<CommentToProduct>(e => e.ChildrenComments)
-               .WithOne(e => e.ParentComment)
-               .HasForeignKey(e => e.ParentCommentId);
+            //Главная сущность Comment связана с зависимой сущностью AnswerToComment в отношении многие AnswerToComment к одному Answer.
+            modelBuilder.Entity<Comment>()
+                  .HasMany<AnswerToComment>(e => e.ChildrenComments)
+                  .WithOne()
+                  .HasForeignKey(e => e.ParentCommentId);
+            
+            modelBuilder.Entity<Comment>()
+                  .HasMany<VoteToComment>()
+                  .WithOne()
+                  .HasForeignKey(e => e.CommentId);
+
+            modelBuilder.Entity<User>()
+                  .HasMany<VoteToComment>()
+                  .WithOne()
+                  .HasForeignKey(e => e.AuthorId);
       }
 
       void ConfigureIndexes(ModelBuilder modelBuilder)
       {
-         modelBuilder.Entity<User>()
-               .HasIndex(u => u.Email);
+            modelBuilder.Entity<User>()
+                  .HasIndex(u => u.Login);
 
-         modelBuilder.Entity<Product>()
-               .HasIndex(u => u.Model);
+            modelBuilder.Entity<User>()
+                  .HasIndex(u => u.Email);
+
+            modelBuilder.Entity<Product>()
+                  .HasIndex(u => u.Model);
+
+            modelBuilder.Entity<Comment>()
+                  .HasIndex(u => u.WritingDate);
       }
 
       void ConfigureMoneyTypes(ModelBuilder modelBuilder)
       {
-         modelBuilder.Entity<User>()
-               .Property(u => u.Money)
-               .HasColumnType("money");
+            modelBuilder.Entity<User>()
+                  .Property(u => u.Money)
+                  .HasColumnType("money");
 
-         modelBuilder.Entity<Product>()
-               .Property(p => p.Price)
-               .HasColumnType("money");
+            modelBuilder.Entity<Product>()
+                  .Property(p => p.Price)
+                  .HasColumnType("money");
 
-         modelBuilder.Entity<ShoppingList>()
-               .Property(l => l.FinalPrice)
-               .HasColumnType("money");
+            modelBuilder.Entity<ShoppingList>()
+                  .Property(l => l.FinalPrice)
+                  .HasColumnType("money");
       }
 
       void ConfigureDefaultValues(ModelBuilder modelBuilder)
       {
-         modelBuilder.Entity<UserWithChangedRole>()
-               .Property(u => u.RoleChangingTime)
-               .HasDefaultValue(DateTime.UtcNow.ToUniversalTime());
-
-         modelBuilder.Entity<CommentToProduct>()
-               .Property(c => c.WritingDate)
-               .HasDefaultValue(DateTimeOffset.UtcNow.ToUniversalTime());
+            modelBuilder.Entity<Comment>()
+                  .Property(c => c.WritingDate)
+                  .HasDefaultValue(DateTimeOffset.UtcNow.ToUniversalTime());
       }
 
       void InitializeDatabaseWithValues(ModelBuilder modelBuilder)
       {
-            
-            Role adminRole = new Role() {Id=1, Name="Admin"};
             modelBuilder.Entity<Role>().HasData(
-                  adminRole,
-                  new Role() {Id=2, Name = "StoreAdmin"},
-                  new Role() {Id=3, Name = "User"}
-         );
+                  new Role() {Id=1, Name = "User"},
+                  new Role() {Id=1 << 1, Name = "StoreAdmin"},
+                  new Role() {Id=1 << 2, Name = "Admin"}
+            );
 
-         //TODO Password Hash для админа
-         modelBuilder.Entity<User>().HasData(
-               new User() {Login = "Admin", RoleId = adminRole.Id, Email = "Hamsterdreams@inbox.ru", PasswordHash="", Money=99999, }
-         );
 
-         modelBuilder.Entity<Country>().HasData(
-               new Country() {Name="Россия"},
-               new Country() {Name="Япония"},
-               new Country() {Name="Китай"}
-         );
+            //TODO Password Hash для админа
+            modelBuilder.Entity<User>().HasData(
+                  new User() {Id=1, Login = "Admin", RoleId = 0b100, Email = "Hamsterdreams@inbox.ru", PasswordHash="", Money=99999 }
+            );
+
+            modelBuilder.Entity<Country>().HasData(
+                  new Country() {Name="RU"},
+                  new Country() {Name="JP"},
+                  new Country() {Name="CN"}
+            );
       }
    }
 }

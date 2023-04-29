@@ -5,15 +5,17 @@ namespace HamsterWorld.Models
    public class User
    {
       // Первичный ключ
-      public string Login { get; set; } = "";
+      public int Id { get; set; }
+
       
       //Внешний ключ
-      public int RoleId { get; set; }
+      public ushort RoleId { get; set; }
       //Навигационные свойства
       public Role Role { get; set; } = null!;
-      public List<CommentToProduct>? Comments { get; set; }
+      public List<Comment>? Comments { get; set; }
 
       //Столбцы
+      public string Login { get; set; } = "";
       public string Email { get; set; } = "";
       public string PasswordHash { get; set; } = "";
       public decimal Money { get; set; }
@@ -21,24 +23,25 @@ namespace HamsterWorld.Models
    }
    public class Role
    {
-      //Первичный ключ
-      public int Id { get; set; }
+      //Первичный ключ (в бинарном формате)
+      public ushort Id { get; set; }
       
       //Навигационное свойство
       public List<User>? Users { get; set; }
+
       //Столбец
       public string Name { get; set; } = "";
+
+      //Константы
+      public const int USER = 1;
+      public const int STORE_ADMIN = 0b10;
+      public const int ADMIN = 0b100;
    }
    //Люди, попавшие сюда, должны заново пройти авторизацию.
    public class UserWithChangedRole
    {
       //Внешний ключ (и первичный)
-      public string UserLogin { get; set; } = "";
-      //Навигационное свойство
-      public User User { get; set; } = null!;
-
-      //Столбец
-      public DateTime RoleChangingTime { get; set; }
+      public int UserId { get; set; }
    }
 
    public class Store
@@ -58,12 +61,8 @@ namespace HamsterWorld.Models
    public class StoreAdministrator
    {
       //Внешние ключи (и первичные)
-      public string UserLogin { get; set; } = "";
+      public int UserId { get; set; }
       public short StoreId { get; set; }
-
-      //Навигационные свойства
-      public User User { get; set; } = null!;
-      public Store Store { get; set; } = null!;
    }
 
 
@@ -119,7 +118,7 @@ namespace HamsterWorld.Models
 
       //Столбцы
       public string Path { get; set; } = "";
-      public int OrderNumber { get; set; }
+      public ushort OrderNumber { get; set; }
    }
 
    public class ShoppingList
@@ -136,33 +135,63 @@ namespace HamsterWorld.Models
    }
    public class ItemOfShoppingList
    {
-      //Внешние ключи
+      //Внешние (и первичные) ключи
       public int ShoppingListId { get; set; }
       public int ProductId { get; set; }
       //Навигационное свойство
       public Product Product { get; set; } = null!;
-      public ShoppingList ShoppingList { get; set; } = null!;
 
       // Столбец
       public int Amount { get; set; }
    }
-   
-   public class CommentToProduct
+
+   public class Comment
    {
       //Первичный ключ
       public int Id { get; set; }
 
-      //Внешние ключи
-      public string? UserLogin { get; set; }
-      public int ProductId { get; set; }
-      public int? ParentCommentId { get; set; }
 
+      //Внешний ключ (Если AuthorId == null, тогда коммент считается удалённым)
+      public int? AuthorId { get; set; }
       //Навигационное свойство
-      public CommentToProduct? ParentComment { get; set; }
-      public List<CommentToProduct>? ChildrenComments { get; set; }
+      public User Author { get; set; } = null!;
+
 
       //Столбцы
       public string Content { get; set; } = "";
       public DateTimeOffset WritingDate { get; set; }
+      public int Likes { get; set; }
+      public int Dislikes { get; set; }
+      //Навигационное свойство
+      public List<AnswerToComment>? ChildrenComments { get; set; }
+   }
+   
+   public class CommentToProduct : Comment 
+   {
+      //Внешний ключ
+      public int ProductId { get; set; }
+
+      //Столбец
+      public ushort AmountOfStars { get; set; }
+   }
+
+   public class AnswerToComment : Comment
+   {
+      //Внешний ключ
+      public int ParentCommentId { get; set; }
+   }
+
+   public class VoteToComment
+   {
+      //Внешние ключи (и первичные)
+      public int CommentId { get; set; }
+      public int AuthorId { get; set; }
+
+      //Столбец
+      public bool type { get; set; }
+
+      //Константы
+      public const bool LIKE = true;
+      public const bool DISLIKE = false;
    }
 }
