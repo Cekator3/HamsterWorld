@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore; 
 using HamsterWorld.Models;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace HamsterWorld
 {
@@ -7,16 +8,40 @@ namespace HamsterWorld
    {
       public static void Main(string[] args) 
       {
-         var builder = WebApplication.CreateBuilder(args);
+         WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+         ConfigureServices(builder);
 
-         string connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
+         WebApplication app = builder.Build();
+         Configure(app);
+
+         app.Run();
+      }
+
+      static void ConfigureServices(WebApplicationBuilder builder)
+      {
+			//ConnectionString расположена в User-Secrets
+         string connectionString = builder.Configuration["ConnectionStrings:DefaultConnection"]!;
          builder.Services.AddDbContext<ApplicationContext>(options => options.UseNpgsql(connectionString, x => x.UseNetTopologySuite()));
 
-         // Service == Dependency
+         builder.Services.AddAuthentication("Cookies").AddCookie(config => 
+         {
+            config.AccessDeniedPath = "/AccessDenied/Index";
+            config.LoginPath = "/Auth/Login";
+         });
+         builder.Services.AddAuthorization(options =>
+         {
+
+         });
+
          builder.Services.AddControllersWithViews();
 
-         var app = builder.Build();
+         //Сессионное хранилище
+         builder.Services.AddDistributedMemoryCache();
+         builder.Services.AddSession();
+      }
 
+      static void Configure(WebApplication app)
+      {
 
          //Middleware обработки исключений, возникающих в приложении
          if (app.Environment.IsDevelopment())
@@ -34,13 +59,17 @@ namespace HamsterWorld
          app.UseStatusCodePagesWithReExecute("/StatusCode/{0}");
 
          app.UseStaticFiles();
-
          app.UseRouting();
+
+         app.UseAuthentication();
+         app.UseAuthorization();
+
+         app.UseSession();
+
          app.MapControllerRoute(
              name: "default",
              pattern: "{controller=Home}/{action=Index}/{id?}");
 
-         app.Run();
       }
    }
 }

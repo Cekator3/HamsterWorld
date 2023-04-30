@@ -1,0 +1,33 @@
+﻿@model HamsterWorld.Models.LoginBindingModel;
+@{
+    
+    List<FormElement> FormElements = new List<FormElement>()
+    {
+        new FormElement(){Name = "Login", Inner = "Введите логин"}, 
+        new FormElement(){Name = "Password", Inner = "Введите пароль"}
+    };
+}
+
+@using(Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+    <div class="validation" asp-validation-summary="ModelOnly"></div>
+    <input hidden asp-for="ReturnUrl" />
+
+    <div>
+        @foreach(FormElement elem in FormElements)
+        {
+            <div class="form-group">
+                @Html.Label(expression: elem.Name, labelText: elem.Inner)
+                @Html.TextBox(expression: @elem.Name, value: "")
+                <span asp-validation-for="@elem.Name" />
+            </div>
+        }
+        <button type="submit">Войти</button>
+    </div>
+}
+
+
+<script src='@Url.Content("~/Scripts/jquery-1.8.2.js")' type='text/javascript'></script>    
+<script src='@Url.Content("~/Scripts/jquery.validate.js")' type='text/javascript'>         </script>
+<script src='@Url.Content("~/Scripts/jquery.validate.unobtrusive.js")' type='text/javascript'></script>

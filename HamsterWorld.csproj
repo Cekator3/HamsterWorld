@@ -5,11 +5,15 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>1a884fbb-b75d-43ab-9813-653ae37ddccf</UserSecretsId>
+
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Bcrypt.Net-Next" Version="4.0.3" />
+    <PackageReference Include="Microsoft.jQuery.Unobtrusive.Validation" Version="4.0.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="7.0.4" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite" Version="7.0.4" />
+    <PackageReference Include="SixLaborsCaptcha.Core" Version="0.2.2" />
   </ItemGroup>
 
 </Project>

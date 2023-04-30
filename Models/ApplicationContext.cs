@@ -21,7 +21,6 @@ namespace HamsterWorld.Models
 
       public ApplicationContext(DbContextOptions<ApplicationContext> options) : base(options)
       {
-            Database.EnsureDeleted();
             Database.EnsureCreated();
       }
 
@@ -207,15 +206,15 @@ namespace HamsterWorld.Models
       void InitializeDatabaseWithValues(ModelBuilder modelBuilder)
       {
             modelBuilder.Entity<Role>().HasData(
-                  new Role() {Id=1, Name = "User"},
-                  new Role() {Id=1 << 1, Name = "StoreAdmin"},
-                  new Role() {Id=1 << 2, Name = "Admin"}
+                  new Role() {Id=1, Name = "Banned"},
+                  new Role() {Id=1 << 1, Name = "User"},
+                  new Role() {Id=1 << 2, Name = "StoreAdmin"},
+                  new Role() {Id=1 << 3, Name = "Admin"}
             );
-
 
             //TODO Password Hash для админа
             modelBuilder.Entity<User>().HasData(
-                  new User() {Id=1, Login = "Admin", RoleId = 0b100, Email = "Hamsterdreams@inbox.ru", PasswordHash="", Money=99999 }
+                  new User() {Id=1, Login = "Admin", RoleId = 0b100, Email = "Hamsterdreams@inbox.ru", PasswordHash=BCrypt.Net.BCrypt.HashPassword("1"), Money=99999 }
             );
 
             modelBuilder.Entity<Country>().HasData(

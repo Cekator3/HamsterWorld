@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using HamsterWorld.Models;
 
 namespace HamsterWorld.Controllers;
@@ -15,12 +16,8 @@ public class HomeController : Controller
         _context = context;
     }
 
+    [Authorize]
     public IActionResult Index()
-    {
-        return View();
-    }
-
-    public IActionResult Privacy()
     {
         return View();
     }
