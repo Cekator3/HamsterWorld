@@ -1,45 +1,36 @@
-using System;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HamsterWorld.Models
 {
 	public class SignUpBindingModel
 	{
-		[Required]
-		public string? Login { get; set; }
+		[Required(ErrorMessage = "Придумайте логин")]
+		public string Login { get; set; } = "";
 
-		[Required]
+		[Required(ErrorMessage = "Введите свою электронную почту")]
 		[DataType(DataType.EmailAddress)]
-		public string? Email { get; set; }
+		public string Email { get; set; } = "";
 
-		[Required]
+		[Required(ErrorMessage = "Придумайте пароль для себя")]
 		[DataType(DataType.Password)]
-		public string? Password { get; set; }
+		public string Password { get; set; } = "";
 
-		[Compare("Password")]
+		[Compare("Password", ErrorMessage = "Пароли не совпадают")]
 		[DataType(DataType.Password)]
-		public string? PasswordConfirm { get; set; }
+		public string PasswordConfirm { get; set; } = "";
 
-		[Required]
-		[Display(Name = "adkfsj")]
-		public string? CaptchaUserAnswer { get; set; }
+		[Required(ErrorMessage = "Введите ответ на капчу")]
+		public string CaptchaUserAnswer { get; set; } = "";
 	}
 
 	public class LoginBindingModel
 	{
-		[Required(ErrorMessage = "lsakjf")]
-		public string? Login { get; set; }
-		[Required(ErrorMessage = "lakjfd")]
+		[Required(ErrorMessage = "Введите логин")]
+		public string Login { get; set; } = "";
+		[Required(ErrorMessage = "Введите пароль")]
 		[DataType(DataType.Password)]
-		public string? Password { get; set; }
+		public string Password { get; set; } = "";
 
-		public string? ReturnUrl { get; set; }
-	}
-
-	public class FormElement
-	{
-		public string Name { get; set; } = "";
-		public string Inner { get; set; } = "";
+		public string? ReturnUrl { get; set; } = "";
 	}
 }

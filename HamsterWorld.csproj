@@ -10,7 +10,6 @@
 
   <ItemGroup>
     <PackageReference Include="Bcrypt.Net-Next" Version="4.0.3" />
-    <PackageReference Include="Microsoft.jQuery.Unobtrusive.Validation" Version="4.0.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="7.0.4" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite" Version="7.0.4" />
     <PackageReference Include="SixLaborsCaptcha.Core" Version="0.2.2" />

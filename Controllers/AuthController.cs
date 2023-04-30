@@ -121,7 +121,7 @@ namespace HamsterWorld.Controllers
 
 		public async Task<IActionResult> Logout()
 		{
-			await HttpContext.SignOutAsync("Cookies");
+			await HttpContext.SignOutAsync("MyCookie");
 			return Redirect("/");
 		}
 
@@ -159,7 +159,7 @@ namespace HamsterWorld.Controllers
 				new Claim(ClaimTypes.Role, user.RoleId.ToString()),
 				new Claim(ClaimTypes.Email, user.Email)
 			};
-			ClaimsIdentity claimsIdentity = new ClaimsIdentity(claims, "Cookies");
+			ClaimsIdentity claimsIdentity = new ClaimsIdentity(claims, "MyCookie");
 			ClaimsPrincipal claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
 
 			await HttpContext.SignInAsync("Cookies", claimsPrincipal);
