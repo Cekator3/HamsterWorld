@@ -16,7 +16,7 @@ namespace HamsterWorld.CaptchaCreator
 			{
 				DrawLines = 5,
 				TextColor = new Color[] { Color.Blue, Color.Black },
-				FontFamilies = new string[] { "JetBrainsMono Nerd Font" }
+				FontFamilies = new string[] { "JetBrainsMono NF" }
 			});
 
 			byte[] result = slc.Generate(Answer);

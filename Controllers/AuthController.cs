@@ -101,7 +101,7 @@ namespace HamsterWorld.Controllers
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> Login(LoginBindingModel model)
 		{
-			User? user = await DbUsageTools.GetUser(model.Login, _context);
+			User? user = await DatabaseTools.GetUser(model.Login, _context);
 			if(user == null)
 			{
 				ModelState.AddModelError(nameof(model.Login), "Пользователя с таким логином не существует");
@@ -121,7 +121,7 @@ namespace HamsterWorld.Controllers
 
 		public async Task<IActionResult> Logout()
 		{
-			await HttpContext.SignOutAsync("MyCookie");
+			await HttpContext.SignOutAsync("Cookies");
 			return Redirect("/");
 		}
 
@@ -159,7 +159,7 @@ namespace HamsterWorld.Controllers
 				new Claim(ClaimTypes.Role, user.RoleId.ToString()),
 				new Claim(ClaimTypes.Email, user.Email)
 			};
-			ClaimsIdentity claimsIdentity = new ClaimsIdentity(claims, "MyCookie");
+			ClaimsIdentity claimsIdentity = new ClaimsIdentity(claims, "Cookies");
 			ClaimsPrincipal claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
 
 			await HttpContext.SignInAsync("Cookies", claimsPrincipal);
