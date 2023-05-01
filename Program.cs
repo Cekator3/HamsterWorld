@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore; 
 using HamsterWorld.Models;
-using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Security.Claims;
 
 namespace HamsterWorld
 {
@@ -31,7 +31,21 @@ namespace HamsterWorld
          });
          builder.Services.AddAuthorization(options =>
          {
-
+            options.AddPolicy(name: Role.AdminRoleName, policy =>
+            {
+               policy.RequireRole(Role.ADMIN.ToString());
+            });
+            options.AddPolicy(name: Role.StoreAdminRoleName, policy =>
+            {
+               policy.RequireAssertion( x => 
+                  x.User.HasClaim(ClaimTypes.Role, Role.STORE_ADMIN.ToString()) ||
+                  x.User.HasClaim(ClaimTypes.Role, Role.ADMIN.ToString())
+               );
+            });
+            options.AddPolicy(name: Role.BannedUserRoleName, policy =>
+            {
+               policy.RequireRole(Role.BANNED.ToString());
+            });
          });
 
          builder.Services.AddControllersWithViews();

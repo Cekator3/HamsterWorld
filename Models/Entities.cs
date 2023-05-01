@@ -33,9 +33,14 @@ namespace HamsterWorld.Models
       public string Name { get; set; } = "";
 
       //Константы
-      public const int USER = 1;
-      public const int STORE_ADMIN = 0b10;
-      public const int ADMIN = 0b100;
+      public const int BANNED = 1;
+      public const int USER = 0b10;
+      public const int STORE_ADMIN = 0b100;
+      public const int ADMIN = 0b1000;
+      public const string BannedUserRoleName = "Banned";
+      public const string UserRoleName = "User";
+      public const string StoreAdminRoleName = "StoreAdmin";
+      public const string AdminRoleName = "Admin";
    }
    //Люди, попавшие сюда, должны заново пройти авторизацию.
    public class UserWithChangedRole
