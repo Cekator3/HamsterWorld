@@ -1,0 +1,20 @@
+﻿@{
+    ViewData["Title"] = "Пользователи";
+}
+
+<table id="Users" class="table">
+    <thead>
+        <tr>
+            <th scope="col">#</th>
+            <th scope="col">Логин</th>
+            <th scope="col">Текущая роль</th>
+            <th scope="col">Новая роль</th>
+        </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+
+@* Ajax, вытягивающий частичную страничку (сгенерированную) и вставляющий в конец таблицы 
+(он также должен нумеровать строки) *@
+<script src="~/js/ManageUsers.js" asp-append-version="true"></script>

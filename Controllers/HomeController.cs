@@ -7,16 +7,13 @@ namespace HamsterWorld.Controllers;
 
 public class HomeController : Controller
 {
-    private readonly ILogger<HomeController> _logger;
     ApplicationContext _context;
 
-    public HomeController(ILogger<HomeController> logger, ApplicationContext context)
+    public HomeController(ApplicationContext context)
     {
-        _logger = logger;
         _context = context;
     }
 
-    [Authorize(Policy = Role.AdminRoleName)]
     public IActionResult Index()
     {
         return View();

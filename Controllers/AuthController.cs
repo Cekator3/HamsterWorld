@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication;
 using System.Diagnostics;
 using System.Security.Claims;
@@ -135,13 +134,13 @@ namespace HamsterWorld.Controllers
 
 		private async Task<bool> IsLoginExist(string login)
 		{
-			User? user = await _context.Users.FirstOrDefaultAsync(u => u.Login == login);
+			User? user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Login == login);
 
 			return user != null;
 		}
 		private async Task<bool> IsEmailExist(string email)
 		{
-			User? user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+			User? user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Email == email);
 
 			return user != null;
 		}
