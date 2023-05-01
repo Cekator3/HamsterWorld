@@ -1,4 +1,7 @@
 ﻿@model SignUpBindingModel;
+@{
+    ViewBag.Title = "Регистрация";
+}
 
 <form asp-controller="Auth" asp-action="SignUp" method="post" asp-antiforgery="true">
     <div class="validation" asp-validation-summary="ModelOnly"></div>

@@ -3,7 +3,7 @@ using HamsterWorld.Models;
 
 namespace DatabaseUsageTools
 {
-	public static class DbUsageTools
+	public static class DatabaseTools
 	{
 		public static async Task<User?> GetUser(string login, ApplicationContext context)
 		{

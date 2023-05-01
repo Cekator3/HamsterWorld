@@ -16,7 +16,7 @@ public class HomeController : Controller
         _context = context;
     }
 
-    [Authorize]
+    [Authorize(Policy = Role.AdminRoleName)]
     public IActionResult Index()
     {
         return View();
