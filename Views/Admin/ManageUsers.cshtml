@@ -9,10 +9,15 @@
             <th scope="col">Логин</th>
             <th scope="col">Текущая роль</th>
             <th scope="col">Новая роль</th>
+            <th scope="col">Магазин</th>
         </tr>
     </thead>
-    <tbody>
-    </tbody>
+    @using(Html.BeginForm()) 
+    {
+        Html.AntiForgeryToken();
+        <tbody>
+        </tbody>
+    }
 </table>
 
 @* Ajax, вытягивающий частичную страничку (сгенерированную) и вставляющий в конец таблицы 

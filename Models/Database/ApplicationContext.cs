@@ -9,7 +9,6 @@ namespace HamsterWorld.Models
       public DbSet<Role> Roles { get; set; } = null!;
       public DbSet<UserWithChangedRole> Blacklist { get; set; } = null!;
       public DbSet<Store> Stores { get; set; } = null!;
-      public DbSet<StoreAdministrator> StoresAdministrators { get; set; } = null!;
       public DbSet<Country> Countries { get; set; } = null!;
       public DbSet<CPU> CPUs { get; set; } = null!;
       public DbSet<GPU> GPUs { get; set; } = null!;
@@ -58,9 +57,6 @@ namespace HamsterWorld.Models
             modelBuilder.Entity<Store>()
                   .HasKey(u => u.Id);
 
-            modelBuilder.Entity<StoreAdministrator>()
-                  .HasKey(a => new { a.UserId, a.StoreId });
-
             modelBuilder.Entity<Country>()
                   .HasKey(c => c.Name);
 
@@ -98,17 +94,11 @@ namespace HamsterWorld.Models
                   .WithOne()
                   .HasForeignKey<UserWithChangedRole>(u => u.UserId);
 
-            //Главная сущность User связана с зависимой сущностю StoreAdmin в отношении один User ко многим StoreAdministrator.
+            //Сущности User и Store связаны в отношении многие ко многим. Промежуточная таблица называется storesAdministrators
             modelBuilder.Entity<User>()
-                  .HasMany<StoreAdministrator>()
-                  .WithOne()
-                  .HasForeignKey(a => a.UserId);
-
-            //Главная сущность Store связана с зависимой сущностю StoreAdmin в отношении один Store ко многим StoreAdmin.
-            modelBuilder.Entity<Store>()
-                  .HasMany<StoreAdministrator>(e => e.Administrators)
-                  .WithOne()
-                  .HasForeignKey(s => s.StoreId);
+                  .HasMany<Store>(e => e.AdministratingStores)
+                  .WithMany(e => e.Administrators)
+                  .UsingEntity(t => t.ToTable("storesAdministrators"));
 
             //Главная сущность Country связана с зависимой сущностью Product в отношении один Country ко многим Product. 
             modelBuilder.Entity<Country>()

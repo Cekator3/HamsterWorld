@@ -23,14 +23,14 @@ async function loadRowsToTable()
 
 	let htmlCode = await response.text();
 
-	//Check if we downloaded all rows
+	//Check if we can't download more rows from backend
 	if(htmlCode.length == 0)
 	{
 		window.removeEventListener('scroll', checkIfRowsNeedToBeLoaded);
 		return;
 	}
 
-	//Insert table
+	//Insert rows in table
 	let table = document.querySelector("tbody");
 	table.insertAdjacentHTML('beforeend', htmlCode);
 

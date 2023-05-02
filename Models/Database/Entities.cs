@@ -13,6 +13,7 @@ namespace HamsterWorld.Models
       //Навигационные свойства
       public Role Role { get; set; } = null!;
       public List<Comment>? Comments { get; set; }
+      public List<Store>? AdministratingStores { get; set; }
 
       //Столбцы
       public string Login { get; set; } = "";
@@ -61,15 +62,8 @@ namespace HamsterWorld.Models
       public Point Coordinates { get; set; } = null!;
 
       //Навигационное свойство
-      public List<StoreAdministrator>? Administrators;
+      public List<User>? Administrators;
    }
-   public class StoreAdministrator
-   {
-      //Внешние ключи (и первичные)
-      public int UserId { get; set; }
-      public short StoreId { get; set; }
-   }
-
 
    //Страна производитель
    public class Country

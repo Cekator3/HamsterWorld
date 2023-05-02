@@ -26,16 +26,22 @@ public class AdminController : Controller
     public async Task<IActionResult> GetUsersRows(int startPosition = 1)
     {
         int amount = 15;
-        IQueryable<UserBindingModel> query = _context.Users
-                                                    .AsNoTracking()
-                                                    .Include(c => c.Role)
-                                                    .Where(u => u.Id >= startPosition)
-                                                    .OrderBy(u => u.Id)
-                                                    .Select(u => new UserBindingModel(u.Login, u.Role.Name))
-                                                    .Take(amount);
+        IQueryable<UserInfoBindingModel> query = _context.Users
+                                                        .AsNoTracking()
+                                                        .Include(e => e.Role)
+                                                        .Include(e => e.AdministratingStores)
+                                                        .Where(u => u.Id >= startPosition)
+                                                        .OrderBy(u => u.Id)
+                                                        .Select(e => new UserInfoBindingModel
+                                                        (
+                                                            e.Login,
+                                                            e.Role.Name,
+                                                            e.AdministratingStores
+                                                        ))
+                                                        .Take(amount);
 
         ViewBag.startPosition = startPosition;
-        List<UserBindingModel> users = await query.ToListAsync();
+        List<UserInfoBindingModel> users = await query.ToListAsync();
         return PartialView("_GetUsersRows", users);
     }
 

@@ -1,22 +1,29 @@
-﻿@model List<UserBindingModel>
+﻿@model List<UserInfoBindingModel>
+@using Microsoft.EntityFrameworkCore
+@inject ApplicationContext _context
 @{
     if(Model.Count == 0)
     {
         return;
     }
-}
-@{
     int position = ViewBag.startPosition;
+    List<string> allStores = _context.Stores.AsNoTracking().Select(e => e.Name).ToList<String>();
+    List<string> allRoles = _context.Roles.AsNoTracking().Select(e => e.Name).ToList<String>();
 }
+
 <tbody>
-@foreach(UserBindingModel user in Model)
+@foreach(UserInfoBindingModel user in Model)
 {
+    MultiSelectList stores = new MultiSelectList(allStores, user.StoresNames);
+    SelectList roles = new SelectList(allRoles, user.RoleName);
+
     @:<tr>
-    @:    <th scope="row" class="position">@position</th>
-    @:    <th class="login">@user.Login</th>
-    @:    <th class="oldRoleName">@user.RoleName</th>
-    @:    <th class="newRoleName">@user.RoleName</th>
-    @:</tr
+    @:  <th scope="row" class="position">@position</th>
+    @:  <th class="login">@user.Login</th>
+    @:  <th class="oldRoleName">@user.RoleName</th>
+    @:  <th class="newRoleName">@Html.DropDownList("store", roles, "---")</th>
+    @:  <th>@Html.DropDownList("store", stores, "---")</th>
+    @:</tr>
     position++;
 }
 
