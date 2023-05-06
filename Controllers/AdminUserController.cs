@@ -59,17 +59,31 @@ public class AdminUserController : Controller
 
         if(user == null)
         {
-            return BadRequest("Пользователя не существует");
+            return BadRequest("Такого пользователя не существует");
         }
         if(role == null)
         {
             return BadRequest("Такой роли не существует");
         }
-        //Saving new role to database
-        user.Role = role;
-        await _context.SaveChangesAsync();
 
+        //Saving new user's role to database
+        user.Role = role;
+
+        //Adding user to blacklist
+        UserWithChangedRole usr = new UserWithChangedRole()
+        {
+            UserId = user.Id
+        };
+        await _context.Blacklist.AddAsync(usr);
+
+        await _context.SaveChangesAsync();
         return Ok();
+    }
+
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    public IActionResult Error()
+    {
+        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }
 
     IQueryable<UserInfoBindingModel> ApplyFilterToQuery(IQueryable<UserInfoBindingModel> query, FilterBindingModel filters)
@@ -87,11 +101,5 @@ public class AdminUserController : Controller
                 break;
         }
         return query;
-    }
-
-    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-    public IActionResult Error()
-    {
-        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }
 }

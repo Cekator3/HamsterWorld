@@ -26,9 +26,12 @@ namespace HamsterWorld
          builder.Services.AddAuthentication("Cookies").AddCookie(config => 
          {
             config.Cookie.Name = "MyCookie";
-            config.AccessDeniedPath = "/AccessDenied/Index";
+            config.AccessDeniedPath = "/Forbidden/";
             config.LoginPath = "/Auth/Login";
+            config.EventsType = typeof(CustomCookieAuthenticationEvents);
          });
+         builder.Services.AddScoped<CustomCookieAuthenticationEvents>();
+
          builder.Services.AddAuthorization(options =>
          {
             options.AddPolicy(name: Role.AdminRoleName, policy =>
