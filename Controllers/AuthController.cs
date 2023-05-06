@@ -148,7 +148,7 @@ namespace HamsterWorld.Controllers
 		{
 			return Bcrypt.Verify(text, passwordHash);
 		}
-		public static async Task<User?> GetUser(string login, ApplicationContext context)
+		private async Task<User?> GetUser(string login, ApplicationContext context)
 		{
 			return await context.Users.FirstOrDefaultAsync(u => u.Login == login);
 		}
