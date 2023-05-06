@@ -57,9 +57,10 @@ namespace HamsterWorld.Models
 
       //Столбцы
       public string Name { get; set; } = "";
-      public TimeOnly OpenningTime { get; set; }
+      public TimeOnly OpeningTime { get; set; }
       public TimeOnly ClosingTime { get; set; }
       public Point Coordinates { get; set; } = null!;
+      public string Address { get; set; } = "";
 
       //Навигационное свойство
       public List<User>? Administrators;

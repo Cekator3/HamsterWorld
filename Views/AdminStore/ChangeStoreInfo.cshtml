@@ -1,0 +1,39 @@
+﻿@model ChangeStoreInfoBindingModel
+@* TODO Это Полное повторение кода из AddStore *@
+
+<form asp-action="ChangeStoreInfo" autocomplete="off">
+    @Html.AntiForgeryToken()
+    <div class="validation" asp-validation-summary="ModelOnly"></div>
+    <input hidden readonly asp-for="Id">
+
+    <div>
+        <div class="form-group">
+            @Html.LabelFor(m => m.Name, labelText: "Введите название магазина")
+            @Html.EditorFor(m => m.Name)
+            <span asp-validation-for="Name"></span>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(m => m.OpeningTime, labelText: "Введите время открытия магазина")
+            @Html.EditorFor(m => m.OpeningTime)
+            <span asp-validation-for="OpeningTime"></span>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(m => m.ClosingTime, labelText: "Введите время закрытия магазина")
+            @Html.EditorFor(m => m.ClosingTime)
+            <span asp-validation-for="ClosingTime"></span>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(m => m.Address, labelText: "Введите адрес магазина")
+            @Html.EditorFor(m => m.Address)
+            <span asp-validation-for="Address"></span>
+        </div>
+    </div>
+
+    <button type="submit">Сохранить</button>
+
+</form>
+
+<a asp-action="ChangeStoreAdministrators" asp-route-storeId="@Model.Id">Изменить администраторов этого магазина</a>

@@ -20,6 +20,8 @@ namespace HamsterWorld.Models
 
       public ApplicationContext(DbContextOptions<ApplicationContext> options) : base(options)
       {
+            // Database.EnsureDeleted();
+            // Database.EnsureCreated();
       }
 
       protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -168,6 +170,10 @@ namespace HamsterWorld.Models
 
             modelBuilder.Entity<Comment>()
                   .HasIndex(u => u.WritingDate);
+
+            modelBuilder.Entity<Store>()
+                  .HasIndex(u => u.Address)
+                  .IsUnique();
       }
 
       void ConfigureMoneyTypes(ModelBuilder modelBuilder)
@@ -201,9 +207,20 @@ namespace HamsterWorld.Models
                   new Role() { Id=Role.BANNED, Name = Role.BannedUserRoleName }
             );
 
-            //TODO Password Hash для админа
             modelBuilder.Entity<User>().HasData(
                   new User() {Id=1, Login = "admin", RoleId = Role.ADMIN, Email = "Hamsterdreams@inbox.ru", PasswordHash=BCrypt.Net.BCrypt.HashPassword("1"), Money=99999 }
+            );
+            modelBuilder.Entity<User>().HasData(
+                  new User() {Id=2, Login = "test2", RoleId = Role.STORE_ADMIN, Email = "Hamsterdreams1@inbox.ru", PasswordHash=BCrypt.Net.BCrypt.HashPassword("1"), Money=99999 }
+            );
+            modelBuilder.Entity<User>().HasData(
+                  new User() {Id=3, Login = "test3", RoleId = Role.STORE_ADMIN, Email = "Hamsterdreams2@inbox.ru", PasswordHash=BCrypt.Net.BCrypt.HashPassword("1"), Money=99999 }
+            );
+            modelBuilder.Entity<User>().HasData(
+                  new User() {Id=4, Login = "test4", RoleId = Role.STORE_ADMIN, Email = "Hamsterdreams3@inbox.ru", PasswordHash=BCrypt.Net.BCrypt.HashPassword("1"), Money=99999 }
+            );
+            modelBuilder.Entity<User>().HasData(
+                  new User() {Id=5, Login = "test5", RoleId = Role.STORE_ADMIN, Email = "Hamsterdreams4@inbox.ru", PasswordHash=BCrypt.Net.BCrypt.HashPassword("1"), Money=99999 }
             );
 
             modelBuilder.Entity<Country>().HasData(

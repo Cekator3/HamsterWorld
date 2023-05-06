@@ -46,10 +46,10 @@
                             {
 
                                 <li class='nav-item'>
-                                    <a class='nav-link text-dark' asp-area='' asp-controller='Admin' asp-action='ManageStores'>Список филиалов</a>
+                                    <a class='nav-link text-dark' asp-area='' asp-controller='AdminStore' asp-action='ManageStores'>Филиалы</a>
                                 </li>
                                 <li class='nav-item'>
-                                    <a class='nav-link text-dark' asp-area='' asp-controller='Admin' asp-action='ManageUsers'>Пользователи</a>
+                                    <a class='nav-link text-dark' asp-area='' asp-controller='AdminUser' asp-action='ManageUsers'>Пользователи</a>
                                 </li>
                             }
                             @if (userRole >= Role.BANNED)

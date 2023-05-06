@@ -1,0 +1,34 @@
+﻿@model List<UserInfoBindingModel>
+<div id="xhrAnswer"></div>
+<form asp-controller="AdminUser" asp-action="ManageUsers" method="get">
+    <label>Поиск:</label>
+    @Html.DropDownList("FilterType", Html.GetEnumSelectList(typeof(UserInfoBindingModel.Filters)))
+    <input name="FilterValue">
+    <button type="submit">Применить</button>
+</form>
+<table id="Users" class="table">
+    <thead>
+        <tr>
+            <th scope="col">#</th>
+            <th scope="col">Логин</th>
+            <th scop="col">Email</th>
+            <th scope="col">Роль</th>
+        </tr>
+    </thead>
+
+    <tbody id="usersTableBody">
+        @for (byte i = 0; i < Model.Count; i++)
+        {
+            SelectList roles = new SelectList(UserInfoBindingModel.AllRoles, Model[i].Role);
+
+            <tr>
+                <th scope="row">@(i + 1)</th>
+                <th scope="row">@Model[i].Login</th>
+                <th scope="row">@Model[i].Email</th>
+                <th scope="row">@Html.DropDownList("newRoleName", roles, null, new {@class="newRoleName", @login=$"{Model[i].Login}"})</th>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<script src="~/js/AdminUser/ManageUsers.js"></script>

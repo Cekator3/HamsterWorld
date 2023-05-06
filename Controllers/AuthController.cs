@@ -6,7 +6,6 @@ using HamsterWorld.Models;
 using HamsterWorld.CaptchaCreator;
 using Bcrypt = BCrypt.Net.BCrypt;
 using Microsoft.EntityFrameworkCore;
-using DatabaseUsageTools;
 
 namespace HamsterWorld.Controllers
 {
@@ -100,7 +99,7 @@ namespace HamsterWorld.Controllers
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> Login(LoginBindingModel model)
 		{
-			User? user = await DatabaseTools.GetUser(model.Login, _context);
+			User? user = await GetUser(model.Login, _context);
 			if(user == null)
 			{
 				ModelState.AddModelError(nameof(model.Login), "Пользователя с таким логином не существует");
@@ -148,6 +147,10 @@ namespace HamsterWorld.Controllers
 		private bool IsPasswordValid(string text, string passwordHash)
 		{
 			return Bcrypt.Verify(text, passwordHash);
+		}
+		public static async Task<User?> GetUser(string login, ApplicationContext context)
+		{
+			return await context.Users.FirstOrDefaultAsync(u => u.Login == login);
 		}
 
 		private async Task SendAuthCookiesToUser(User user)

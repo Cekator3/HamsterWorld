@@ -1,0 +1,38 @@
+﻿@using YandexStaticMap;
+@using NetTopologySuite.Geometries;
+@inject IConfiguration _config
+@model List<Store>
+
+<a asp-action="AddStore">Добавить филиал</a>
+
+<table id="Users" class="table">
+    <thead>
+        <tr>
+            <th scope="col">Id</th>
+            <th scope="col">Название</th>
+            <th scope="col">Адрес</th>
+            <th scope="col">Расписание</th>
+            <th scope="col">Изменить</th>
+            <th scope="col">Удалить</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (Store store in Model)
+        {
+            <tr>
+                <th scope="row">@store.Id</th>
+                <th scope="row">@store.Name</th>
+                <th scope="row">@store.Address</th>
+                <th scope="row">с @store.OpeningTime до @store.ClosingTime</th>
+                <th scope="row"><a asp-action="ChangeStoreInfo" asp-route-id="@store.Id">Изменить</a></th>
+                <th scope="row"><a asp-action="DeleteStore" asp-route-id="@store.Id">Удалить</a></th>
+            </tr>    
+        }
+    </tbody>
+</table>
+
+@{
+    List<Point> coordinatesOfStores = Model.Select(e => e.Coordinates).ToList();
+    string imageSrc = YandexStaticMapTools.GenerateSrcAttributeForMap(coordinatesOfStores, _config);
+}
+<img src="@imageSrc">

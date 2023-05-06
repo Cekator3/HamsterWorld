@@ -1,0 +1,46 @@
+﻿@model AddStoreBindingModel
+
+<form asp-action="AddStore" autocomplete="off">
+    @Html.AntiForgeryToken()
+    <div class="validation" asp-validation-summary="ModelOnly"></div>
+
+    <div>
+        <div class="form-group">
+            @Html.LabelFor(m => m.Name, labelText: "Введите название магазина")
+            @Html.EditorFor(m => m.Name)
+            <span asp-validation-for="Name"></span>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(m => m.OpeningTime, labelText: "Введите время открытия магазина")
+            @Html.EditorFor(m => m.OpeningTime)
+            <span asp-validation-for="OpeningTime"></span>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(m => m.ClosingTime, labelText: "Введите время закрытия магазина")
+            @Html.EditorFor(m => m.ClosingTime)
+            <span asp-validation-for="ClosingTime"></span>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(m => m.Address, labelText: "Введите адрес магазина")
+            @Html.EditorFor(m => m.Address)
+            <span asp-validation-for="Address"></span>
+        </div>
+
+        <button type="submit" cls="btn">Сохранить</button>
+    </div>
+</form>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/suggestions-jquery@21.12.0/dist/css/suggestions.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/suggestions-jquery@21.12.0/dist/js/jquery.suggestions.min.js"></script>
+
+<script>
+    $("#Address").suggestions({
+        token: "fb8efd9660bc8c29c59353134773f1a3d17db203",
+        type: "ADDRESS",
+    });
+</script>
