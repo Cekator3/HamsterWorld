@@ -1,4 +1,9 @@
 ﻿@model List<ChangeStoreAdministratorsBindingModel>
+@{
+    var AdminsOfThisStore = Model.Where(e => e.IsAdminOfThisStore).ToList();
+    var NotAdminsOfThisStore = Model.Where(e => !e.IsAdminOfThisStore).ToList();
+}
+
 <div id="xhrAnswer"></div>
 
 <table id="Users" class="table">
@@ -12,13 +17,23 @@
     </thead>
 
     <tbody>
-        @for (byte i = 0; i < Model.Count; i++)
+        @{int j = 0;}
+        @for (; j < AdminsOfThisStore.Count; j++)
         {
             <tr>
-                <th scope="row">@(i + 1)</th>
-                <th scope="row">@Model[i].Login</th>
-                <th scope="row">@Model[i].Email</th>
-                <th><input class="IsAdminOfThisStore" type="checkbox" value="@Model[i].IsAdminOfThisStore" storeId="@ViewBag.StoreId" adminId="@Model[i].AdminId"></th>
+                <th scope="row">@(j+1)</th>
+                <th scope="row">@AdminsOfThisStore[j].Login</th>
+                <th scope="row">@AdminsOfThisStore[j].Email</th>
+                <th><input checked class="IsAdminOfThisStore" type="checkbox" storeId="@ViewBag.StoreId" adminId="@AdminsOfThisStore[j].AdminId"></th>
+            </tr>
+        }
+        @for (byte i = 0; i < NotAdminsOfThisStore.Count; i++)
+        {
+            <tr>
+                <th scope="row">@(j+i+1)</th>
+                <th scope="row">@NotAdminsOfThisStore[i].Login</th>
+                <th scope="row">@NotAdminsOfThisStore[i].Email</th>
+                <th><input class="IsAdminOfThisStore" type="checkbox" storeId="@ViewBag.StoreId" adminId="@NotAdminsOfThisStore[i].AdminId"></th>
             </tr>
         }
     </tbody>

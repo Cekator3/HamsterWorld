@@ -1,0 +1,23 @@
+﻿@model List<Store>
+
+<table id="Users" class="table">
+    <thead>
+        <tr>
+            <th scope="col">#</th>
+            <th scope="col">Название</th>
+            <th scope="col">Адрес</th>
+            <th scope="col">Изменить</th>
+        </tr>
+    </thead>
+    <tbody>
+        @for(byte i = 0; i < Model.Count; i++)
+        {
+            <tr>
+                <th scope="row">@(i+1)</th>
+                <th scope="row">@Model[i].Name</th>
+                <th scope="row">@Model[i].Address</th>
+                <th scope="row"><a asp-action="ManageProducts" asp-route-storeId="@Model[i].Id">Выбрать</a></th>
+            </tr>    
+        }
+    </tbody>
+</table>

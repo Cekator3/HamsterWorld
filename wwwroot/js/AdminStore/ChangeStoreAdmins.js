@@ -8,7 +8,7 @@ function SaveChanges()
 {
 	let AdminId = this.getAttribute('adminId');
 	let StoreId = this.getAttribute('storeId');
-	let IsAdminOfThisStore = this.value == "on";
+	let IsAdminOfThisStore = this.checked;
 
 	let xhr = new XMLHttpRequest();
 	xhr.open('POST', `/AdminStore/ChangeStoreAdministrators?adminId=${AdminId}&storeId=${StoreId}&isBecomingAdmin=${IsAdminOfThisStore}`);

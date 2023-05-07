@@ -39,7 +39,7 @@
                             @if (userRole >= Role.STORE_ADMIN)
                             {
                                 <li class='nav-item'>
-                                    <a class='nav-link text-dark' asp-area='' asp-controller='StoreAdmin' asp-action='Catalog'>Список товаров магазина</a>
+                                    <a class='nav-link text-dark' asp-area='' asp-controller='StoreAdministrator' asp-action='ChooseStore'>Список товаров магазина</a>
                                 </li>
                             }
                             @if (userRole == Role.ADMIN)

@@ -112,7 +112,7 @@ public class AdminStoreController : Controller
     {
         if (storeId <= 0)
         {
-            return BadRequest();
+            return BadRequest("Неверно указан Id магазина");
         }
         //Obtaining Id list of all administrators of this store
         var storeInfo = _context.Stores.AsNoTracking()
@@ -150,28 +150,32 @@ public class AdminStoreController : Controller
         }
 
         //Obtain store info from database
-        Store? store = _context.Stores
-                                .Include(e => e.Administrators)
-                                .FirstOrDefault(e => e.Id == storeId);
+        Store? store = await _context.Stores.FindAsync(storeId);
         if(store == null)
         {
             return BadRequest("Магазина не существует");
         }
-        //Список id администраторов этого магазина
-        List<int> adminsOfThisStore = store.Administrators!.Select(e => e.Id).ToList();
-
-        //Find user to which we want give rights
+        //Obtain admin info from database
         User? admin = await _context.Users.FindAsync(adminId);
         if(admin == null)
         {
             return BadRequest("Пользователя с таким Id не существует");
         }
 
-        if(!adminsOfThisStore.Contains(adminId) && (bool)isBecomingAdmin)
+        //Explicitly loads to context administrator's info of this store
+        await _context.Entry(store) 
+                      .Collection(e => e.Administrators!)
+                      .Query()
+                      .FirstOrDefaultAsync(e => e.Id == adminId);
+
+        //Adding or removing admin from administrating this store
+        bool IsAlreadyAdminOfThisStore = store.Administrators![0].Id == adminId;
+
+        if(!IsAlreadyAdminOfThisStore & (bool)isBecomingAdmin)
         {
             store.Administrators!.Add(admin);
         }
-        if(adminsOfThisStore.Contains(adminId) && (bool)!isBecomingAdmin)
+        if(IsAlreadyAdminOfThisStore && (bool)!isBecomingAdmin)
         {
             store.Administrators!.Remove(admin);
         }
