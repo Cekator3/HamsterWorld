@@ -11,7 +11,7 @@ namespace HamsterWorld.Controllers
 {
 	public class AuthController : Controller
 	{
-		ApplicationContext _context;
+		private readonly ApplicationContext _context;
 
 		public AuthController(ApplicationContext context)
 		{
@@ -74,7 +74,7 @@ namespace HamsterWorld.Controllers
 					Login = model.Login,
 					RoleId = Role.USER,
 					Email = model.Email,
-					PasswordHash = Bcrypt.HashPassword(model.Password),
+					PasswordHash = GeneratePasswordHash(model.Password),
 					Money = 0
 				};
 				await _context.Users.AddAsync(user);
@@ -99,7 +99,8 @@ namespace HamsterWorld.Controllers
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> Login(LoginBindingModel model)
 		{
-			User? user = await GetUser(model.Login, _context);
+			User? user = await GetUser(model.Login);
+
 			if(user == null)
 			{
 				ModelState.AddModelError(nameof(model.Login), "Пользователя с таким логином не существует");
@@ -144,13 +145,17 @@ namespace HamsterWorld.Controllers
 			return user != null;
 		}
 
+		private string GeneratePasswordHash(string password)
+		{
+			return Bcrypt.HashPassword(password);
+		}
 		private bool IsPasswordValid(string text, string passwordHash)
 		{
 			return Bcrypt.Verify(text, passwordHash);
 		}
-		private async Task<User?> GetUser(string login, ApplicationContext context)
+		private async Task<User?> GetUser(string login)
 		{
-			return await context.Users.FirstOrDefaultAsync(u => u.Login == login);
+			return await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Login == login);
 		}
 
 		private async Task SendAuthCookiesToUser(User user)

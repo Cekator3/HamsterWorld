@@ -13,8 +13,8 @@ namespace HamsterWorld.Controllers;
 [Authorize(Policy = Role.AdminRoleName)]
 public class AdminStoreController : Controller
 {
-    ApplicationContext _context;
-    IConfiguration _config;
+    readonly ApplicationContext _context;
+    readonly IConfiguration _config;
 
     public AdminStoreController(ApplicationContext context, IConfiguration config)
     {
@@ -24,7 +24,10 @@ public class AdminStoreController : Controller
 
     public async Task<IActionResult> ManageStores()
     {
-        List<Store> stores = await _context.Stores.AsNoTracking().OrderBy(e => e.Id).ToListAsync();
+        //List of stores sorted by Id
+        List<Store> stores = await _context.Stores.AsNoTracking()
+                                                    .OrderBy(e => e.Id)
+                                                    .ToListAsync();
         return View(stores);
     }
 
@@ -32,6 +35,7 @@ public class AdminStoreController : Controller
     {
         return View();
     }
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AddStore(AddStoreBindingModel model)
@@ -185,16 +189,17 @@ public class AdminStoreController : Controller
 
     bool IsWorkingScheduleTooShort(TimeOnly openingTime, TimeOnly closingTime)
     {
-        long minTime = new TimeOnly(hour: 4, minute: 0).Ticks;
+        long minWorkingTime = new TimeOnly(hour: 4, minute: 0).Ticks;
 
-        //Такое возможно, когда, например, открывается в 22:00, а закрывается в 02:00 ночи
+        //For example, 22:00 - 02:00
         if(openingTime > closingTime)
         {
             int timeUntilMidnight = 24 - openingTime.Hour;
             openingTime = openingTime.AddHours(timeUntilMidnight);
             closingTime = closingTime.AddHours(timeUntilMidnight);
         }
-        return Math.Abs(openingTime.Ticks - closingTime.Ticks) < minTime;
+
+        return Math.Abs(openingTime.Ticks - closingTime.Ticks) < minWorkingTime;
     }
 
     async Task<bool> TryAddNewStoreToDatabase(AddStoreBindingModel model)

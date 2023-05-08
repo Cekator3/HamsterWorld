@@ -58,7 +58,7 @@ namespace HamsterWorld.Controllers
             return View();
         }
         //TODO Расплодить контроллеры (ManageCPU, ManageGPU...) или сделать один(ManageProduct)
-        public IActionResult Manage()
+        // public IActionResult Manage()
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
