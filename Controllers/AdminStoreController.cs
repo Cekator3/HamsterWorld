@@ -162,14 +162,13 @@ public class AdminStoreController : Controller
             return BadRequest("Пользователя с таким Id не существует");
         }
 
-        //Explicitly loads to context administrator's info of this store
+        //Loads to context current user's info if he is admin of this store
         await _context.Entry(store) 
                       .Collection(e => e.Administrators!)
                       .Query()
                       .FirstOrDefaultAsync(e => e.Id == adminId);
 
-        //Adding or removing admin from administrating this store
-        bool IsAlreadyAdminOfThisStore = store.Administrators![0].Id == adminId;
+        bool IsAlreadyAdminOfThisStore = store.Administrators.Count == 1;
 
         if(!IsAlreadyAdminOfThisStore & (bool)isBecomingAdmin)
         {

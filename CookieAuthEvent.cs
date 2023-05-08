@@ -13,8 +13,8 @@ public class CustomCookieAuthenticationEvents : CookieAuthenticationEvents
 
 	public override async Task ValidatePrincipal(CookieValidatePrincipalContext context)
 	{
-		//Refresh Cookie действует как таймер, когда следует проверить изменения в бд пользователя
-		if(context.Request.Cookies.ContainsKey("RefreshCookie"))
+		//if refresh cookie exist or Auth Cookie isn't
+		if(context.Request.Cookies.ContainsKey("RefreshCookie") || !context.Request.Cookies.ContainsKey("MyCookie"))
 		{
 			return;
 		}

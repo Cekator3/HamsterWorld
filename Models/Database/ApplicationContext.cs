@@ -62,6 +62,9 @@ namespace HamsterWorld.Models
             modelBuilder.Entity<Country>()
                   .HasKey(c => c.Name);
 
+            modelBuilder.Entity<Assortment>()
+                  .HasKey(a => new {a.StoreId, a.ProductId});
+
             modelBuilder.Entity<Product>()
                   .HasKey(p => p.Id);
 
@@ -102,11 +105,59 @@ namespace HamsterWorld.Models
                   .WithMany(e => e.Administrators)
                   .UsingEntity(t => t.ToTable("storesAdministrators"));
 
+            //Store и GPU связаны отношением многие ко многим через промежуточную таблицу Assortment
+            modelBuilder.Entity<Store>()
+                  .HasMany<GPU>(e => e.GPUs)
+                  .WithMany(e => e.Stores)
+                  .UsingEntity<Assortment>
+                  (
+                        j => j
+                        .HasOne<GPU>()
+                        .WithMany()
+                        .HasForeignKey(a => a.ProductId),
+                        j => j
+                        .HasOne<Store>()
+                        .WithMany()
+                        .HasForeignKey(a => a.StoreId)
+                  );
+
+            //Store и CPU связаны отношением многие ко многим через промежуточную таблицу Assortment
+            modelBuilder.Entity<Store>()
+                  .HasMany<CPU>(e => e.CPUs)
+                  .WithMany(e => e.Stores)
+                  .UsingEntity<Assortment>
+                  (
+                        j => j
+                        .HasOne<CPU>()
+                        .WithMany()
+                        .HasForeignKey(a => a.ProductId),
+                        j => j
+                        .HasOne<Store>()
+                        .WithMany()
+                        .HasForeignKey(a => a.StoreId)
+                  );
+
+            //Store и RAM связаны отношением многие ко многим через промежуточную таблицу Assortment
+            modelBuilder.Entity<Store>()
+                  .HasMany<RAM>(e => e.RAMs)
+                  .WithMany(e => e.Stores)
+                  .UsingEntity<Assortment>
+                  (
+                        j => j
+                        .HasOne<RAM>()
+                        .WithMany()
+                        .HasForeignKey(a => a.ProductId),
+                        j => j
+                        .HasOne<Store>()
+                        .WithMany()
+                        .HasForeignKey(a => a.StoreId)
+                  );
+
             //Главная сущность Country связана с зависимой сущностью Product в отношении один Country ко многим Product. 
             modelBuilder.Entity<Country>()
-                  .HasMany<Product>(e => e.ProductsFromThisCountry)
+                  .HasMany<Product>()
                   .WithOne()
-                  .HasForeignKey(e => e.CountryName)
+                  .HasForeignKey(e => e.Country)
                   .OnDelete(DeleteBehavior.Restrict);
 
             //Главная сущность ShoppingList связана с зависимой сущностью ItemOfShoppingList в отношении один ShoppingList ко многим Item. 
@@ -196,6 +247,10 @@ namespace HamsterWorld.Models
             modelBuilder.Entity<Comment>()
                   .Property(c => c.WritingDate)
                   .HasDefaultValue(DateTimeOffset.UtcNow.ToUniversalTime());
+
+            modelBuilder.Entity<Assortment>()
+                  .Property(p => p.Amount)
+                  .HasDefaultValue(0);
       }
 
       void InitializeDatabaseWithValues(ModelBuilder modelBuilder)
@@ -224,9 +279,9 @@ namespace HamsterWorld.Models
             );
 
             modelBuilder.Entity<Country>().HasData(
-                  new Country() {Name="RU"},
-                  new Country() {Name="JP"},
-                  new Country() {Name="CN"}
+                  new Country() {Name=Country.Russia},
+                  new Country() {Name=Country.Japan},
+                  new Country() {Name=Country.China}
             );
       }
    }

@@ -16,7 +16,7 @@
                 <th scope="row">@(i+1)</th>
                 <th scope="row">@Model[i].Name</th>
                 <th scope="row">@Model[i].Address</th>
-                <th scope="row"><a asp-action="ManageProducts" asp-route-storeId="@Model[i].Id">Выбрать</a></th>
+                <th scope="row"><a asp-action="ChooseCategory" asp-route-storeId="@Model[i].Id">Выбрать</a></th>
             </tr>    
         }
     </tbody>

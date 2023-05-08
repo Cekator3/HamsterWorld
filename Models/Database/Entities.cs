@@ -64,6 +64,18 @@ namespace HamsterWorld.Models
 
       //Навигационное свойство
       public List<User>? Administrators;
+      public List<GPU>? GPUs;
+      public List<CPU>? CPUs;
+      public List<RAM>? RAMs;
+   }
+
+   public class Assortment
+   {
+      //Внешние (и первичные) ключи
+      public short StoreId { get; set; }
+      public int ProductId { get; set; }
+      //Столбец
+      public int Amount { get; set; }
    }
 
    //Страна производитель
@@ -71,9 +83,9 @@ namespace HamsterWorld.Models
    {
       //Первичный ключ
       public string Name { get; set; } = "";
-
-      //Навигационное свойство
-      public List<Product>? ProductsFromThisCountry { get; set; }
+      public const string Russia = "RU";
+      public const string Japan = "JP";
+      public const string China = "CN";
    }
    public class Product
    {
@@ -81,7 +93,7 @@ namespace HamsterWorld.Models
       public int Id { get; set; }
 
       //Внешний ключ
-      public string? CountryName { get; set; }
+      public string Country { get; set; } = "";
       //Навигационные свойства
       public List<CommentToProduct>? Comments { get; set; }
       public List<ProductPicture>? Pictures { get; set; }
@@ -96,17 +108,23 @@ namespace HamsterWorld.Models
       public string Socket { get; set; } = "";
       public ushort NumberOfCores { get; set; }
       public ushort ClockRate { get; set; }
+      //Нав свойство
+      public List<Store> Stores { get; set; } = new List<Store>();
    }
    public class GPU : Product
    {
       public int VRAM { get; set; }
       public string MemoryType { get; set; } = "";
       public int AmountOfMemory { get; set; }
+      //Нав свойство
+      public List<Store> Stores { get; set; } = new List<Store>();
    }
    public class RAM : Product
    {
       public string MemoryType { get; set; } = "";
       public int AmountOfMemory { get; set; }
+      //Нав свойство
+      public List<Store> Stores { get; set; } = new List<Store>();
    }
    public class ProductPicture
    {
