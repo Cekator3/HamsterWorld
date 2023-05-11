@@ -1,3 +1,3 @@
-﻿<a asp-action="ManageCPUs" asp-route-storeId=@ViewBag.StoreId>Процессоры</a>
-<a asp-action="ManageGPUs" asp-route-storeId=@ViewBag.StoreId>Видеокарты</a>
-<a asp-action="ManageRAMs" asp-route-storeId=@ViewBag.StoreId>Оперативная память</a>
+﻿<a asp-action="ManageProducts" asp-route-storeId=@ViewBag.StoreId asp-route-category=@Product.Categorys.CPU>Процессоры</a>
+<a asp-action="ManageProducts" asp-route-storeId=@ViewBag.StoreId asp-route-category=@Product.Categorys.GPU>Видеокарты</a>
+<a asp-action="ManageProducts" asp-route-storeId=@ViewBag.StoreId asp-route-category=@Product.Categorys.RAM>Оперативная память</a>

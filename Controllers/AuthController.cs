@@ -50,7 +50,7 @@ namespace HamsterWorld.Controllers
 		public async Task<IActionResult> SignUp(SignUpBindingModel model)
 		{
 			string captchaRealAnswer = HttpContext.Session.GetString("CaptchaRealAnswer")!;
-			if(model.CaptchaUserAnswer != captchaRealAnswer)
+			if (model.CaptchaUserAnswer != captchaRealAnswer)
 			{
 				ModelState.AddModelError(nameof(model.CaptchaUserAnswer), "Неправильный ответ на капчу");
 
@@ -58,15 +58,15 @@ namespace HamsterWorld.Controllers
 				model.CaptchaUserAnswer = "";
 				HttpContext.Session.SetString("CaptchaRealAnswer", Captcha.GenerateAnswer());
 			}
-			if(await IsLoginExist(model.Login))
+			if (await IsLoginExist(model.Login))
 			{
 				ModelState.AddModelError(nameof(model.Login), "Пользователь с таким логином уже существует");
 			}
-			if(await IsEmailExist(model.Email))
+			if (await IsEmailExist(model.Email))
 			{
 				ModelState.AddModelError(nameof(model.Email), "Пользователя с такой электронной почтой уже существует");
 			}
-			if(ModelState.IsValid)
+			if (ModelState.IsValid)
 			{
 				//Adding user to Database
 				User user = new User()
@@ -91,7 +91,7 @@ namespace HamsterWorld.Controllers
 		[HttpGet]
 		public IActionResult Login(string? returnUrl)
 		{
-			LoginBindingModel model = new LoginBindingModel() {ReturnUrl = returnUrl};
+			LoginBindingModel model = new LoginBindingModel() { ReturnUrl = returnUrl };
 			return View(model);
 		}
 
@@ -99,17 +99,19 @@ namespace HamsterWorld.Controllers
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> Login(LoginBindingModel model)
 		{
-			User? user = await GetUser(model.Login);
+			//Get user with that login
+			User? user = await _context.Users.AsNoTracking()
+														.FirstOrDefaultAsync(u => u.Login == model.Login);
 
-			if(user == null)
+			if (user == null)
 			{
 				ModelState.AddModelError(nameof(model.Login), "Пользователя с таким логином не существует");
 			}
-			else if(!IsPasswordValid(model.Password, user.PasswordHash))
+			else if (!IsPasswordValid(model.Password, user.PasswordHash))
 			{
 				ModelState.AddModelError(nameof(model.Password), "Неверный пароль");
 			}
-			if(ModelState.IsValid)
+			if (ModelState.IsValid)
 			{
 				await SendAuthCookiesToUser(user!);
 				return Redirect(model.ReturnUrl ?? "/");
@@ -152,10 +154,6 @@ namespace HamsterWorld.Controllers
 		private bool IsPasswordValid(string text, string passwordHash)
 		{
 			return Bcrypt.Verify(text, passwordHash);
-		}
-		private async Task<User?> GetUser(string login)
-		{
-			return await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Login == login);
 		}
 
 		private async Task SendAuthCookiesToUser(User user)

@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace HamsterWorld.Models
 {
 	public class UserInfoBindingModel
@@ -7,15 +5,6 @@ namespace HamsterWorld.Models
 		public string Login { get; set; } = "";
 		public string Email { get; set; } = "";
 		public string Role { get; set; } = "";
-		public enum Filters
-		{
-			[Display(Name="Логин")]
-			Login,
-			[Display(Name="Email")]
-			Email,
-			[Display(Name="Роль")]
-			Role
-		}
-		static public List<string> AllRoles { get; set; } = null!;
+		static public List<string> AllRoles { get; set; } = new List<string>();
 	}	
 }

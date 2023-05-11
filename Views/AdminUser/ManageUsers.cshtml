@@ -1,11 +1,13 @@
 ﻿@model List<UserInfoBindingModel>
+
 <div id="xhrAnswer"></div>
+
 <form asp-controller="AdminUser" asp-action="ManageUsers" method="get">
     <label>Поиск:</label>
-    @Html.DropDownList("FilterType", Html.GetEnumSelectList(typeof(UserInfoBindingModel.Filters)))
-    <input name="FilterValue">
+    <input name="Search">
     <button type="submit">Применить</button>
 </form>
+
 <table id="Users" class="table">
     <thead>
         <tr>

@@ -64,6 +64,7 @@ namespace HamsterWorld.Models
 
       //Навигационное свойство
       public List<User>? Administrators;
+      public List<Assortment>? Assortments;
       public List<GPU>? GPUs;
       public List<CPU>? CPUs;
       public List<RAM>? RAMs;
@@ -102,6 +103,13 @@ namespace HamsterWorld.Models
       public string Model { get; set; } = "";
       public string Description { get; set; } = "";
       public decimal Price { get; set; }
+
+      public enum Categorys : byte
+      {
+         CPU,
+         GPU,
+         RAM
+      }
    }
    public class CPU : Product
    {
@@ -109,7 +117,7 @@ namespace HamsterWorld.Models
       public ushort NumberOfCores { get; set; }
       public ushort ClockRate { get; set; }
       //Нав свойство
-      public List<Store> Stores { get; set; } = new List<Store>();
+      public List<Assortment>? Assortments;
    }
    public class GPU : Product
    {
@@ -117,14 +125,14 @@ namespace HamsterWorld.Models
       public string MemoryType { get; set; } = "";
       public int AmountOfMemory { get; set; }
       //Нав свойство
-      public List<Store> Stores { get; set; } = new List<Store>();
+      public List<Assortment>? Assortments;
    }
    public class RAM : Product
    {
       public string MemoryType { get; set; } = "";
       public int AmountOfMemory { get; set; }
       //Нав свойство
-      public List<Store> Stores { get; set; } = new List<Store>();
+      public List<Assortment>? Assortments;
    }
    public class ProductPicture
    {

@@ -40,7 +40,7 @@ namespace HamsterWorld.Models
 
       protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
       {
-            optionsBuilder.LogTo(Console.WriteLine, new [] {RelationalEventId.CommandExecuted});
+            // optionsBuilder.LogTo(Console.WriteLine, new [] {RelationalEventId.CommandExecuted});
       }
 
 
@@ -108,48 +108,48 @@ namespace HamsterWorld.Models
             //Store и GPU связаны отношением многие ко многим через промежуточную таблицу Assortment
             modelBuilder.Entity<Store>()
                   .HasMany<GPU>(e => e.GPUs)
-                  .WithMany(e => e.Stores)
+                  .WithMany()
                   .UsingEntity<Assortment>
                   (
                         j => j
                         .HasOne<GPU>()
-                        .WithMany()
+                        .WithMany(e => e.Assortments)
                         .HasForeignKey(a => a.ProductId),
                         j => j
                         .HasOne<Store>()
-                        .WithMany()
+                        .WithMany(e => e.Assortments)
                         .HasForeignKey(a => a.StoreId)
                   );
 
             //Store и CPU связаны отношением многие ко многим через промежуточную таблицу Assortment
             modelBuilder.Entity<Store>()
                   .HasMany<CPU>(e => e.CPUs)
-                  .WithMany(e => e.Stores)
+                  .WithMany()
                   .UsingEntity<Assortment>
                   (
                         j => j
                         .HasOne<CPU>()
-                        .WithMany()
+                        .WithMany(e => e.Assortments)
                         .HasForeignKey(a => a.ProductId),
                         j => j
                         .HasOne<Store>()
-                        .WithMany()
+                        .WithMany(e => e.Assortments)
                         .HasForeignKey(a => a.StoreId)
                   );
 
             //Store и RAM связаны отношением многие ко многим через промежуточную таблицу Assortment
             modelBuilder.Entity<Store>()
                   .HasMany<RAM>(e => e.RAMs)
-                  .WithMany(e => e.Stores)
+                  .WithMany()
                   .UsingEntity<Assortment>
                   (
                         j => j
                         .HasOne<RAM>()
-                        .WithMany()
+                        .WithMany(e => e.Assortments)
                         .HasForeignKey(a => a.ProductId),
                         j => j
                         .HasOne<Store>()
-                        .WithMany()
+                        .WithMany(e => e.Assortments)
                         .HasForeignKey(a => a.StoreId)
                   );
 
@@ -224,6 +224,10 @@ namespace HamsterWorld.Models
 
             modelBuilder.Entity<Store>()
                   .HasIndex(u => u.Address)
+                  .IsUnique();
+            
+            modelBuilder.Entity<Product>()
+                  .HasIndex(u => u.Model)
                   .IsUnique();
       }
 

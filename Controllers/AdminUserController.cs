@@ -9,42 +9,36 @@ namespace HamsterWorld.Controllers;
 [Authorize(Policy = Role.AdminRoleName)]
 public class AdminUserController : Controller
 {
-    ApplicationContext _context;
-    IConfiguration _config;
+    readonly ApplicationContext _context;
 
-    public AdminUserController(ApplicationContext context, IConfiguration config)
+    public AdminUserController(ApplicationContext context)
     {
         _context = context;
-        _config = config;
     }
 
-    public async Task<IActionResult> ManageUsers(FilterBindingModel filters)
+    public async Task<IActionResult> ManageUsers(string search = "")
     {
-        //Aquiring roles from database
+        //Список ролей необходим для отображения их в представлении
         UserInfoBindingModel.AllRoles = await _context.Roles.AsNoTracking()
                                                         .Select(e => e.Name)
-                                                        .ToListAsync(); 
+                                                        .ToListAsync();
 
-        //Generating base query to aquire users from database
+        search = search.Trim();
+
+        //Applying search filter to query
         IQueryable<UserInfoBindingModel> query = _context.Users.AsNoTracking()
-                                                                .Include(e => e.Role)
+                                                                .Where(e => e.Login.Contains(search) || e.Email.Contains(search))
                                                                 .Select(e => new UserInfoBindingModel()
                                                                 {
                                                                     Login = e.Login,
                                                                     Email = e.Email,
                                                                     Role = e.Role.Name
                                                                 });
-        
-        //If filter exist then apply him
-        if(filters.FilterValue != null)
-        {
-            query = ApplyFilterToQuery(query, filters);
-        }
 
-        //using query to aquire users from database
+        //Using query to aquire users info from database
         List<UserInfoBindingModel> users = await query.Take(15)
-                                            .OrderBy(e => e.Login)
-                                            .ToListAsync();
+                                                        .OrderBy(e => e.Login)
+                                                        .ToListAsync();
         
         return View(users);
     }
@@ -54,27 +48,30 @@ public class AdminUserController : Controller
     {
         //Getting user from database
         User? user = await _context.Users.FirstOrDefaultAsync(e => e.Login == login);
-        //Getting role from database
-        Role? role = await _context.Roles.AsNoTracking().FirstOrDefaultAsync(e => e.Name == newRole);
-
         if(user == null)
         {
-            return BadRequest("Такого пользователя не существует");
+            return NotFound("Такого пользователя не существует");
         }
+
+        //Getting role from database
+        Role? role = await _context.Roles.AsNoTracking().FirstOrDefaultAsync(e => e.Name == newRole);
         if(role == null)
         {
-            return BadRequest("Такой роли не существует");
+            return NotFound("Такой роли не существует");
         }
 
         //Saving new user's role to database
         user.Role = role;
 
-        //Adding user to blacklist
-        UserWithChangedRole usr = new UserWithChangedRole()
+        //Adding user to blacklist if he is not already there
+        if (await _context.Blacklist.FindAsync(user.Id) == null)
         {
-            UserId = user.Id
-        };
-        await _context.Blacklist.AddAsync(usr);
+            UserWithChangedRole usr = new UserWithChangedRole()
+            {
+                UserId = user.Id
+            };
+            await _context.Blacklist.AddAsync(usr);
+        }
 
         await _context.SaveChangesAsync();
         return Ok();
@@ -84,22 +81,5 @@ public class AdminUserController : Controller
     public IActionResult Error()
     {
         return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-    }
-
-    IQueryable<UserInfoBindingModel> ApplyFilterToQuery(IQueryable<UserInfoBindingModel> query, FilterBindingModel filters)
-    {
-        switch(filters.FilterType)
-        {
-            case (byte)UserInfoBindingModel.Filters.Email:
-                query = query.Where(e => e.Email.StartsWith(filters.FilterValue!));
-                break;
-            case (byte)UserInfoBindingModel.Filters.Login:
-                query = query.Where(e => e.Login.StartsWith(filters.FilterValue!));
-                break;
-            case (byte)UserInfoBindingModel.Filters.Role:
-                query = query.Where(e => e.Role.StartsWith(filters.FilterValue!));
-                break;
-        }
-        return query;
     }
 }

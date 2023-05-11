@@ -44,9 +44,11 @@ public class AdminStoreController : Controller
         {
             ModelState.AddModelError(nameof(model.OpeningTime), "Рабочее время не может быть меньше четырёх часов");
         }
-        else if( !(await TryAddNewStoreToDatabase(model)) )
+
+        (bool IsSuccess, string Message) = await TryAddNewStoreToDatabase(model);
+        if( !IsSuccess )
         {
-            ModelState.AddModelError(nameof(model.Address), "Не удалось распознать полный адрес магазина, либо адрес такого магазина уже существует");
+            ModelState.AddModelError(nameof(model.Address), Message);
         }
 
         if(!ModelState.IsValid)
@@ -60,7 +62,7 @@ public class AdminStoreController : Controller
     public async Task<IActionResult> DeleteStore(int id)
     {
         //Find store by id
-        Store? store = await _context.Stores.FirstOrDefaultAsync(e => e.Id == id);
+        Store? store = await _context.Stores.FindAsync(id);
         if(store == null)
         {
             return NotFound("Такого филиала не существует");
@@ -72,10 +74,10 @@ public class AdminStoreController : Controller
         return RedirectToAction("ManageStores");
     }
 
-    public async Task<IActionResult> ChangeStoreInfo(int id)
+    public async Task<IActionResult> ChangeStoreInfo(short id)
     {
         //Find store by id
-        Store? store = await _context.Stores.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id);
+        Store? store = await _context.Stores.FindAsync(id);
         if(store == null)
         {
             return NotFound("Такого филиала не существует");
@@ -100,10 +102,13 @@ public class AdminStoreController : Controller
         {
             ModelState.AddModelError(nameof(model.OpeningTime), "Рабочее время не может быть меньше четырёх часов");
         }
-        else if(!(await TryApplyChangesToStoreInfo(model)))
+
+        (bool IsSuccess, string Message) = await TryApplyChangesToStoreInfo(model);
+        if( !IsSuccess )
         {
-            ModelState.AddModelError(nameof(model.Address), "Не удалось распознать полный адрес магазина, либо новый адрес магазина соответствует адресу другого магазина");
+            ModelState.AddModelError(nameof(model.Address), Message);
         }
+
         if(!ModelState.IsValid)
         {
             return View(model);
@@ -116,18 +121,22 @@ public class AdminStoreController : Controller
     {
         if (storeId <= 0)
         {
-            return BadRequest("Неверно указан Id магазина");
+            return NotFound("Магазина с таким Id не существует");
         }
-        //Obtaining Id list of all administrators of this store
-        var storeInfo = _context.Stores.AsNoTracking()
-                                    .Include(e => e.Administrators)
-                                    .Select(e => new { e.Id, e.Administrators })
-                                    .FirstOrDefault(e => e.Id == storeId);
-        if(storeInfo == null)
+
+        //Obtaining list of all administrators of this store
+        List<User>? storeAdministrators = (await _context.Stores.AsNoTracking()
+                                                .Include(e => e.Administrators)
+                                                .Select(e => new { e.Id, e.Administrators })
+                                                .FirstOrDefaultAsync(e => e.Id == storeId))
+                                                ?.Administrators;
+        if(storeAdministrators == null)
         {
-            return BadRequest("Магазина не существует");
+            return NotFound("Магазина с таким Id не существует");
         }
-        List<int> adminsIdentificators = storeInfo.Administrators!.Select(e => e.Id).ToList();
+
+        //id list of store's admins
+        List<int> adminsIdentificators = storeAdministrators.Select(e => e.Id).ToList();
 
         //Creating view model
         List<ChangeStoreAdministratorsBindingModel> allAdmins = await _context.Users.AsNoTracking()
@@ -159,6 +168,7 @@ public class AdminStoreController : Controller
         {
             return BadRequest("Магазина не существует");
         }
+
         //Obtain admin info from database
         User? admin = await _context.Users.FindAsync(adminId);
         if(admin == null)
@@ -166,19 +176,19 @@ public class AdminStoreController : Controller
             return BadRequest("Пользователя с таким Id не существует");
         }
 
-        //Loads to context current user's info if he is admin of this store
+        //Loads to context only user's info if he is admin of this store
         await _context.Entry(store) 
                       .Collection(e => e.Administrators!)
                       .Query()
                       .FirstOrDefaultAsync(e => e.Id == adminId);
 
-        bool IsAlreadyAdminOfThisStore = store.Administrators.Count == 1;
+        bool IsAdminOfThisStore = store.Administrators!.Count == 1;
 
-        if(!IsAlreadyAdminOfThisStore & (bool)isBecomingAdmin)
+        if(!IsAdminOfThisStore & (bool)isBecomingAdmin)
         {
             store.Administrators!.Add(admin);
         }
-        if(IsAlreadyAdminOfThisStore && (bool)!isBecomingAdmin)
+        if(IsAdminOfThisStore && (bool)!isBecomingAdmin)
         {
             store.Administrators!.Remove(admin);
         }
@@ -202,33 +212,33 @@ public class AdminStoreController : Controller
         return Math.Abs(openingTime.Ticks - closingTime.Ticks) < minWorkingTime;
     }
 
-    async Task<bool> TryAddNewStoreToDatabase(AddStoreBindingModel model)
+    async Task<(bool, string)> TryAddNewStoreToDatabase(AddStoreBindingModel model)
     {
-        Store? store = await TryConvertInputedStoreInfoToActualStoreInfo(model);
+        Store? store = await TryFindStoreInfoWithDadataService(model);
 
         //Такое может произойти только, когда пользователь ввёл плохой адрес
         if (store == null)
         {
-            return false;
+            return (false, "Не удалось распознать адрес магазина");
         }
-        //Проверяем, существует ли магазин с такими же координатами
-        if(await IsStoreWithThatAddressAlreadyExists(store))
+
+        if(await IsStoreWithThatAddressExistsInDatabase(store))
         {
-            return false;
+            return (false, "Такой магазин уже существует");
         }
 
         await _context.AddAsync(store);
         await _context.SaveChangesAsync();
 
-        return true;
+        return (true, "");
     }
 
-    async Task<Store?> TryConvertInputedStoreInfoToActualStoreInfo(AddStoreBindingModel model)
+    async Task<Store?> TryFindStoreInfoWithDadataService(AddStoreBindingModel model)
     {
         //Obtaining coordinates of store by dadata api
-        Address storeInfo = await ObtainInfoOfStoreFromDadataApiByEnteredAddress(model.Address);
+        Address storeInfo = await ObtainStoreInfoFromDadataApi(model.Address);
 
-        //Если магазин не был найден
+        //If store hasn't been found
         if(storeInfo.geo_lon == null)
         {
             return null;
@@ -254,7 +264,7 @@ public class AdminStoreController : Controller
         return store;
     }
 
-    async Task<Address> ObtainInfoOfStoreFromDadataApiByEnteredAddress(string address)
+    async Task<Address> ObtainStoreInfoFromDadataApi(string address)
     {
         string token = _config["Dadata:ApiKey"]!;
         string secret = _config["Dadata:Secret"]!;
@@ -265,29 +275,33 @@ public class AdminStoreController : Controller
         return await api.Clean<Address>(address);
     }
 
-    async Task<bool> IsStoreWithThatAddressAlreadyExists(Store store)
+    async Task<bool> IsStoreWithThatAddressExistsInDatabase(Store store)
     {
         return await _context.Stores.AsNoTracking() 
                              .FirstOrDefaultAsync(e => e.Coordinates == store.Coordinates) != null;
     }
 
 
-    async Task<bool> TryApplyChangesToStoreInfo(ChangeStoreInfoBindingModel model)
+    async Task<(bool, string)> TryApplyChangesToStoreInfo(ChangeStoreInfoBindingModel model)
     {
-        Store? newStoreInfo = await TryConvertInputedStoreInfoToActualStoreInfo(model);
         Store? oldStoreInfo = await _context.Stores.FindAsync(model.Id);
-
-        //If ID of old store or inputed address are invalid
-        if (oldStoreInfo == null || newStoreInfo == null)
+        if (oldStoreInfo == null)
         {
-            return false;
+            return (false, "Магазина с таким Id не существует");
         }
+
+        Store? newStoreInfo = await TryFindStoreInfoWithDadataService(model);
+        if (newStoreInfo == null)
+        {
+            return (false, "Не удалось найти магазин по такому адресу");
+        }
+
         //Проверяем, если новый адрес магазина соответствует адресам других магазинов
         if(oldStoreInfo.Address != newStoreInfo.Address)
         {
             if (_context.Stores.AsNoTracking().FirstOrDefaultAsync(e => e.Address == model.Address) != null)
             {
-                return false;
+                return (false, "Другой магазин с таким адресом уже существует");
             }
         }
 
@@ -296,8 +310,8 @@ public class AdminStoreController : Controller
         oldStoreInfo.ClosingTime = newStoreInfo.ClosingTime;
         oldStoreInfo.Address = newStoreInfo.Address;
         await _context.SaveChangesAsync();
-        //TODO добавить возможность изменения администраторов магазина
-        return true;
+
+        return (true, "");
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
