@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace HamsterWorld.Models
 {
@@ -9,7 +8,9 @@ namespace HamsterWorld.Models
       public DbSet<Role> Roles { get; set; } = null!;
       public DbSet<UserWithChangedRole> Blacklist { get; set; } = null!;
       public DbSet<Store> Stores { get; set; } = null!;
+      public DbSet<Assortment> Assortments { get; set; } = null!;
       public DbSet<Country> Countries { get; set; } = null!;
+      public DbSet<Product> Products { get; set; } = null!;
       public DbSet<CPU> CPUs { get; set; } = null!;
       public DbSet<GPU> GPUs { get; set; } = null!;
       public DbSet<RAM> RAMs { get; set; } = null!;
@@ -117,7 +118,7 @@ namespace HamsterWorld.Models
                         .HasForeignKey(a => a.ProductId),
                         j => j
                         .HasOne<Store>()
-                        .WithMany(e => e.Assortments)
+                        .WithMany()
                         .HasForeignKey(a => a.StoreId)
                   );
 
@@ -133,7 +134,7 @@ namespace HamsterWorld.Models
                         .HasForeignKey(a => a.ProductId),
                         j => j
                         .HasOne<Store>()
-                        .WithMany(e => e.Assortments)
+                        .WithMany()
                         .HasForeignKey(a => a.StoreId)
                   );
 
@@ -149,7 +150,7 @@ namespace HamsterWorld.Models
                         .HasForeignKey(a => a.ProductId),
                         j => j
                         .HasOne<Store>()
-                        .WithMany(e => e.Assortments)
+                        .WithMany()
                         .HasForeignKey(a => a.StoreId)
                   );
 

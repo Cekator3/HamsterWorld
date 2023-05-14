@@ -64,7 +64,6 @@ namespace HamsterWorld.Models
 
       //Навигационное свойство
       public List<User>? Administrators;
-      public List<Assortment>? Assortments;
       public List<GPU>? GPUs;
       public List<CPU>? CPUs;
       public List<RAM>? RAMs;
@@ -116,22 +115,24 @@ namespace HamsterWorld.Models
       public string Socket { get; set; } = "";
       public ushort NumberOfCores { get; set; }
       public ushort ClockRate { get; set; }
-      //Нав свойство
+
+      //Навигационные свойства
       public List<Assortment>? Assortments;
    }
    public class GPU : Product
    {
       public int VRAM { get; set; }
       public string MemoryType { get; set; } = "";
-      public int AmountOfMemory { get; set; }
-      //Нав свойство
+
+      //Навигационные свойства
       public List<Assortment>? Assortments;
    }
    public class RAM : Product
    {
       public string MemoryType { get; set; } = "";
       public int AmountOfMemory { get; set; }
-      //Нав свойство
+
+      //Навигационные свойства
       public List<Assortment>? Assortments;
    }
    public class ProductPicture
@@ -143,8 +144,11 @@ namespace HamsterWorld.Models
       public int ProductId { get; set; }
 
       //Столбцы
-      public string Path { get; set; } = "";
+      public string FileName { get; set; } = "";
       public ushort OrderNumber { get; set; }
+
+      //Константа
+      public const string PATH = "~/Images/";
    }
 
    public class ShoppingList
@@ -214,7 +218,7 @@ namespace HamsterWorld.Models
       public int AuthorId { get; set; }
 
       //Столбец
-      public bool type { get; set; }
+      public bool Type { get; set; }
 
       //Константы
       public const bool LIKE = true;

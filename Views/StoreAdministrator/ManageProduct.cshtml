@@ -1,0 +1,73 @@
+@model ProductDetailsBindingModel?
+
+<h2>Информация о типе товара</h2>
+
+<form asp-action=@($"Manage{ViewBag.Category}") method="post">
+	<input readonly hidden asp-for="Id">
+
+	<div>
+		<label asp-for="Country">Страна</label>
+		<input asp-for="Country">
+	</div>
+
+	<div>
+		<label asp-for="Model">Модель</label>
+		<input asp-for="Model">
+	</div>
+
+	<div>
+		<label asp-for="Description">Описание</label>
+		<input asp-for="Description">
+	</div>
+
+	<div>
+		<label asp-for="Price">Цена</label>
+		<input asp-for="Price">
+	</div>
+
+	@if(Model == null)
+	{
+		@switch (ViewBag.Category)
+		{
+			case Product.Categorys.CPU:
+				await Html.RenderPartialAsync("CPUDetailsForm");
+				break;
+			case Product.Categorys.GPU:
+				await Html.RenderPartialAsync("GPUDetailsForm");
+				break;
+			case Product.Categorys.RAM:
+				await Html.RenderPartialAsync("RAMDetailsForm");
+				break;
+		}
+	}
+	else if(Model.CpuDetails != null)
+	{
+		await Html.RenderPartialAsync("CPUDetailsForm", Model.CpuDetails);
+	}
+	else if(Model.GpuDetails != null)
+	{
+		await Html.RenderPartialAsync("GPUDetailsForm", Model.GpuDetails);
+	}
+	else if(Model.RamDetails != null)
+	{
+		await Html.RenderPartialAsync("RAMDetailsForm", Model.RamDetails);
+	}
+
+
+	<div class="galery">
+		<h2>Галерея</h2>
+		@foreach (ProductPicture picture in Model.Pictures.OrderBy(img => img.OrderNumber))
+		{
+			<button>Вправо</button>
+			<button>Влево</button>
+			<img src=@($"{ProductPicture.PATH}{picture.FileName}") alt="Картинка" class="order-@picture.OrderNumber">
+			<button asp-action="deletePhoto" asp-route-id="@picture.Id">Удалить фотку</button>
+		}
+	</div>
+
+	<div>
+		<p>Загрузите новую фотку</p>
+	</div>
+
+	<button type="submit">Сохранить</button>
+</form>

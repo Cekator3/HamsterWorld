@@ -3,6 +3,7 @@ using NetTopologySuite.Geometries;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using HamsterWorld.Models;
+using HamsterWorld.DatabaseUtilities;
 using Microsoft.EntityFrameworkCore;
 //Для работы с сервисов Dadata
 using Dadata;
@@ -222,15 +223,7 @@ public class AdminStoreController : Controller
             return (false, "Не удалось распознать адрес магазина");
         }
 
-        if(await IsStoreWithThatAddressExistsInDatabase(store))
-        {
-            return (false, "Такой магазин уже существует");
-        }
-
-        await _context.AddAsync(store);
-        await _context.SaveChangesAsync();
-
-        return (true, "");
+        await DbUsageTools.TryAddStoreToDatabase(_context, store);
     }
 
     async Task<Store?> TryFindStoreInfoWithDadataService(AddStoreBindingModel model)
@@ -273,12 +266,6 @@ public class AdminStoreController : Controller
         var api = new CleanClientAsync(token, secret);
 
         return await api.Clean<Address>(address);
-    }
-
-    async Task<bool> IsStoreWithThatAddressExistsInDatabase(Store store)
-    {
-        return await _context.Stores.AsNoTracking() 
-                             .FirstOrDefaultAsync(e => e.Coordinates == store.Coordinates) != null;
     }
 
 

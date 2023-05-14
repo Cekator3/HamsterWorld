@@ -11,14 +11,45 @@ namespace HamsterWorld.Controllers
     public class StoreAdministratorController : Controller
     {
         readonly ApplicationContext _context;
+        readonly IWebHostEnvironment _env;
 
-        public StoreAdministratorController(ApplicationContext context)
+        public StoreAdministratorController(ApplicationContext context, IWebHostEnvironment env)
         {
             _context = context;
+            _env = env;
         }
 
         public async Task<IActionResult> ChooseStore()
         {
+            if(!(await _context.CPUs.AnyAsync()))
+            {
+                Store? store = await _context.Stores.Include(e => e.CPUs).FirstAsync();
+                CPU cpu = new CPU()
+                {
+                    Socket = "Socket",
+                    NumberOfCores = 16,
+                    ClockRate = 3200,
+                    Country = Country.Russia,
+                    Model = "Intel Core i99",
+                    Description = "Description",
+                    Price = 999.99M
+                };
+
+                CPU cpu2 = new CPU()
+                {
+                    Socket = "Socket2",
+                    NumberOfCores = 32,
+                    ClockRate = 5400,
+                    Country = Country.Japan,
+                    Model = "AMD CPU name",
+                    Description = "DEsckription",
+                    Price = 10.00M
+                };
+
+                store.CPUs!.Add(cpu);
+                store.CPUs!.Add(cpu2);
+                await _context.SaveChangesAsync();
+            }
             //getting user's id from auth cookies
             int userId = GetCurrentUserIdFromAuthCookie();
 
@@ -40,37 +71,11 @@ namespace HamsterWorld.Controllers
 
         public IActionResult ChooseCategory(short storeId)
         {
-            // CPU cpu1 = new CPU();
-            // cpu1.ClockRate = 2500;
-            // cpu1.Country = Country.Russia;
-            // cpu1.Id = 1;
-            // cpu1.Model = "Intel Core i5";
-            // cpu1.NumberOfCores = 6;
-            // cpu1.Pictures = new List<ProductPicture>(){ new ProductPicture(){ Id = 1, Path = "~/Images/Intel_Core_i5.jpg", OrderNumber = 1}};
-            // cpu1.Price = 15_500;
-            // cpu1.Socket = "LGA";
-            // cpu1.Description = "adsf";
-            // _context.CPUs.Add(cpu1);
-
-            // Store store = _context.Stores.Include(e => e.CPUs).FirstOrDefault(e => e.Id == storeId);
-            // store.CPUs.Add(cpu1);
-            // CPU cpu2 = new CPU();
-            // cpu2.ClockRate = 2600;
-            // cpu2.Country = Country.Russia;
-            // cpu2.Id = 2;
-            // cpu2.Model = "Intel Core i6";
-            // cpu2.NumberOfCores = 6;
-            // cpu2.Pictures = new List<ProductPicture>(){ new ProductPicture(){ Id = 2, Path = "~/Images/Intel_Core_i6.jpg", OrderNumber = 1}};
-            // cpu2.Price = 16_600;
-            // cpu2.Socket = "LGA6";
-            // cpu2.Description = "adsf";
-            // _context.CPUs.Add(cpu2);
-            // store.CPUs.Add(cpu2);
-            // _context.SaveChanges();
             ViewBag.StoreId = storeId;
             return View();
         }
 
+        [HttpGet]
         public async Task<IActionResult> ManageProducts(short storeId, byte category, string searchFilter = "")
         {
             searchFilter = searchFilter.Trim(' ');
@@ -81,78 +86,208 @@ namespace HamsterWorld.Controllers
             {
                 return NotFound("Такого магазина не существует");
             }
+
             if( !(await IsUserAdminOfStore(store)))
             {
                 return Unauthorized();
             }
 
             //Loading product's details to context, preparing BindingModel and selecting view
-            List<ProductBindingModel> viewModel = null!;
+            List<ProductAmountBindingModel> viewModel = null!;
+            Store fullStoreInfo = null!;
+
             switch(category)
             {
                 case (byte)Product.Categorys.CPU:
-                    Store fullStoreInfo = await GetStoreWithLoadedCPUsDetails(searchFilter, storeId);
-                    viewModel  = ConvertStoreToCPUBindingModelList(fullStoreInfo).Cast<ProductBindingModel>().ToList();
+                    fullStoreInfo = await GetStoreWithLoadedCPUsDetails(searchFilter, storeId);
+                    viewModel = ConvertStoreToCPUBindingModelList(fullStoreInfo).Cast<ProductAmountBindingModel>().ToList();
                     break;
 
                 case (byte)Product.Categorys.GPU:
+                    fullStoreInfo = await GetStoreWithLoadedCPUsDetails(searchFilter, storeId);
+                    viewModel = ConvertStoreToGPUBindingModelList(fullStoreInfo).Cast<ProductAmountBindingModel>().ToList();
                     break;
 
                 case (byte)Product.Categorys.RAM:
+                    fullStoreInfo = await GetStoreWithLoadedCPUsDetails(searchFilter, storeId);
+                    viewModel = ConvertStoreToRAMBindingModelList(fullStoreInfo).Cast<ProductAmountBindingModel>().ToList();
                     break;
-
                 default:
                     return NotFound("Такой категории не существует");
             }
+
+            ViewBag.Category = category;
             return View("ManageProducts", viewModel);
         }
 
-        public IActionResult AddNewCPU()
+        [HttpGet]
+        public async Task<IActionResult> ManageProduct(int? id, byte? category)
         {
-            return View();
+            if(category == null || !Enum.IsDefined(typeof(Product.Categorys), category))
+            {
+                return NotFound("Такой категории не существует");
+            }
+
+            ViewBag.Category = Enum.GetName(typeof(Product.Categorys), category);
+
+            //Если добавляется новый товар
+            if(id == null)
+            {
+                return View();
+            }
+
+            //Если редактируется существующий
+            ProductDetailsBindingModel? model = null;
+
+            if((byte)category == (byte)Product.Categorys.CPU)
+            {
+                CPU? cpu = await _context.CPUs.AsNoTracking()
+                                            .Include(cpu => cpu.Pictures)
+                                            .FirstOrDefaultAsync(e => e.Id == id);
+
+                if(cpu != null)
+                {
+                    model = new ProductDetailsBindingModel(cpu);
+                }
+
+            }
+            else if((byte)category == (byte)Product.Categorys.GPU)
+            {
+                GPU? gpu = await _context.GPUs.AsNoTracking()
+                                            .Include(gpu => gpu.Pictures)
+                                            .FirstOrDefaultAsync(e => e.Id == id);
+
+                if(gpu != null)
+                {
+                    model = new ProductDetailsBindingModel(gpu);
+                }
+            }
+            else if((byte)category == (byte)Product.Categorys.CPU)
+            {
+                RAM? ram = await _context.RAMs.AsNoTracking()
+                                            .Include(ram => ram.Pictures)
+                                            .FirstOrDefaultAsync(e => e.Id == id);
+
+                if(ram != null)
+                {
+                    model = new ProductDetailsBindingModel(ram);
+                }
+            }
+
+            if(model == null)
+            {
+                return NotFound("Товар не был найден");
+            }
+
+            return View(model);
         }
+
+        public async Task<IActionResult> ManageCPU(ProductDetailsBindingModel model)
+        {
+            return View("ManageProduct", model);
+        }
+
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error()
+        {
+            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+
+        public IActionResult CPUDetailsForm(CPUDetails? model)
+        {
+            return PartialView(model);
+        }
+        public IActionResult GPUDetailsForm(GPUDetails model)
+        {
+            return PartialView(model);
+        }
+        public IActionResult RAMDetailsForm(RAMDetails model)
+        {
+            return PartialView(model);
+        }
+
+
 
         async Task<Store> GetStoreWithLoadedCPUsDetails(string search, short storeId)
         {
             IQueryable<Store> query = _context.Stores.AsNoTracking();
 
             //Include CPUs that match the search filter
-            query = query.Include(e => e.CPUs!.Where(cpu => cpu.Model.Contains(search)));
+            query = query.Include(store => store.CPUs!.Where(cpu => cpu.Model.Contains(search)));
 
             //Also load first picture of each CPU
-            query = query.Include(e => e.CPUs!.Where(cpu => cpu.Model.Contains(search)))
-                            .ThenInclude(e => e.Pictures!.OrderBy(e => e.Id).Take(1));
+            query = query.Include(store => store.CPUs!.Where(cpu => cpu.Model.Contains(search)))
+                            .ThenInclude(store => store.Pictures!.OrderBy(pic => pic.Id).Take(1));
 
             //Also load amount of CPU that contains in that store
-            query = query.Include(e => e.CPUs!.Where(cpu => cpu.Model.Contains(search)))
-                            .ThenInclude(e => e.Assortments);
+            query = query.Include(store => store.CPUs!.Where(cpu => cpu.Model.Contains(search)))
+                            .ThenInclude(cpu => cpu.Assortments);
 
-            query = query.OrderBy(e => e.Id)
+            query = query.OrderBy(store => store.Id)
                         .Take(15)
                         .AsSplitQuery();
 
-            Store store = (await query.FirstOrDefaultAsync(e => e.Id == storeId))!;
+            Store store = (await query.FirstOrDefaultAsync(store => store.Id == storeId))!;
+
+            return store;
+        }
+        async Task<Store> GetStoreWithLoadedGPUsDetails(string search, short storeId)
+        {
+            //Почти полное повторение GetStoreWithLoadedCPUDetails
+            IQueryable<Store> query = _context.Stores.AsNoTracking();
+
+            //Include GPUs that match the search filter
+            query = query.Include(store => store.GPUs!.Where(gpu => gpu.Model.Contains(search)));
+
+            //Also load first picture of each GPU
+            query = query.Include(store => store.GPUs!.Where(gpu => gpu.Model.Contains(search)))
+                            .ThenInclude(store => store.Pictures!.OrderBy(pic => pic.Id).Take(1));
+
+            //Also load amount of GPU that contains in that store
+            query = query.Include(store => store.GPUs!.Where(gpu => gpu.Model.Contains(search)))
+                            .ThenInclude(gpu => gpu.Assortments);
+
+            query = query.OrderBy(store => store.Id)
+                        .Take(15)
+                        .AsSplitQuery();
+
+            Store store = (await query.FirstOrDefaultAsync(store => store.Id == storeId))!;
 
             return store;
         }
 
-        // public async Task LoadGPUsDetails(string search, ref IQueryable<Store> query)
-        // {
-            //То же самое, что и CPU, только заменить CPUs на GPUs
-        // }
-
-        // public async Task LoadRAMsDetails(Store store, string search)
-        // {
-            //То же самое, что и CPU, только заменить CPUs на RAMs
-        // }
-
-        public List<CPUBindingModel> ConvertStoreToCPUBindingModelList(Store store)
+        async Task<Store> GetStoreWithLoadedRAMsDetails(string search, short storeId)
         {
-            List<CPUBindingModel> models = new List<CPUBindingModel>();
+            //Почти полное повторение GetStoreWithLoadedCPUDetails
+            IQueryable<Store> query = _context.Stores.AsNoTracking();
 
-            foreach(CPU cpu in store.CPUs)
+            //Include RAMs that match the search filter
+            query = query.Include(store => store.RAMs!.Where(ram => ram.Model.Contains(search)));
+
+            //Also load first picture of each RAM
+            query = query.Include(store => store.RAMs!.Where(ram => ram.Model.Contains(search)))
+                            .ThenInclude(store => store.Pictures!.OrderBy(pic => pic.Id).Take(1));
+
+            //Also load amount of RAM that contains in that store
+            query = query.Include(store => store.RAMs!.Where(ram => ram.Model.Contains(search)))
+                            .ThenInclude(ram => ram.Assortments);
+
+            query = query.OrderBy(store => store.Id)
+                        .Take(15)
+                        .AsSplitQuery();
+
+            Store store = (await query.FirstOrDefaultAsync(store => store.Id == storeId))!;
+
+            return store;
+        }
+
+        public List<CPUAmountBindingModel> ConvertStoreToCPUBindingModelList(Store store)
+        {
+            List<CPUAmountBindingModel> models = new List<CPUAmountBindingModel>();
+
+            foreach(CPU cpu in store.CPUs!)
             {
-                CPUBindingModel model = new CPUBindingModel(cpu);
+                CPUAmountBindingModel model = new CPUAmountBindingModel(cpu);
 
                 models.Add(model);
             }
@@ -160,10 +295,34 @@ namespace HamsterWorld.Controllers
             return models;
         }
 
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
+        public List<GPUAmountBindingModel> ConvertStoreToGPUBindingModelList(Store store)
         {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            //Почти полное повторение ConvertStoreToCPUBindingModelList
+            List<GPUAmountBindingModel> models = new List<GPUAmountBindingModel>();
+
+            foreach(GPU gpu in store.GPUs!)
+            {
+                GPUAmountBindingModel model = new GPUAmountBindingModel(gpu);
+
+                models.Add(model);
+            }
+
+            return models;
+        }
+
+        public List<RAMAmountBindingModel> ConvertStoreToRAMBindingModelList(Store store)
+        {
+            //Почти полное повторение ConvertStoreToCPUBindingModelList
+            List<RAMAmountBindingModel> models = new List<RAMAmountBindingModel>();
+
+            foreach(RAM ram in store.RAMs!)
+            {
+                RAMAmountBindingModel model = new RAMAmountBindingModel(ram);
+
+                models.Add(model);
+            }
+
+            return models;
         }
 
         async Task<bool> IsUserAdminOfStore(Store store)

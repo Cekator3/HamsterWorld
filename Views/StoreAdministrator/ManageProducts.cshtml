@@ -1,8 +1,7 @@
-﻿@model List<ProductBindingModel>
+﻿@model List<ProductAmountBindingModel>
 <div>
-    @foreach (ProductBindingModel product in Model)
+    @foreach (ProductAmountBindingModel product in Model)
     {
-        //TODO добавить возможность изменить детали (модель, название и прочее)
         <div class="col-lg-4" id="@product.Id">
             <img class="img-thumbnail" src="@product.PictureSrc!" alt="Картинка">
             <h2>@product.ToString()</h2>
@@ -10,33 +9,10 @@
             <p>Количество: <input value=@product.Amount class="Amount"></p>
         </div>
         <div>
-            <p>COMING SOON</p>
-            @if (product is CPUBindingModel)
-            {
-                <p>Изменить информацию о процессоре</p>
-            }
-            else if (product is GPUBindingModel)
-            {
-                <p>Изменить информацию о видеокарте</p>
-            }
-            else if (product is RAMBindingModel)
-            {
-                <p>Изменить информацию об оперативной памяти</p>
-            }
+            <a asp-action="ManageProduct" asp-route-category=@ViewBag.Category asp-route-id=@product.Id>Изменить информацию о этом виде товара</a>
         </div>
     }
     <div class="col-lg-4">
-        @if (product is CPUBindingModel)
-        {
-            <a asp-action="AddNewCPU">Добавить новый процессор</a>
-        }
-        else if (product is GPUBindingModel)
-        {
-            <a asp-action="AddNewGPU">Добавить новую видеокарту</a>
-        }
-        else if (product is RAMBindingModel)
-        {
-            <a asp-action="AddNewRAM">Добавить новую ОЗУ</a>
-        }
+        <a asp-action="ManageProduct" asp-route-category=@ViewBag.Category>Добавить новую ОЗУ</a>
     </div>
 </div>
