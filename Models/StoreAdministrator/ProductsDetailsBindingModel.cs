@@ -1,14 +1,21 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace HamsterWorld.Models
 {
 	public class ProductDetailsBindingModel
 	{
-		public int Id { get; set; } = 0;
+		//Id существующего типа товара
+		public int Id { get; set; } = -1;
+		[Required(ErrorMessage = "Введите страну производителя")]
 		public string Country { get; set; } = "";
+		[Required(ErrorMessage = "Введите название модели")]
 		public string Model { get; set; } = "";
+		[Required(ErrorMessage = "Введите описание")]
 		public string Description { get; set; } = "";
+		[Required(ErrorMessage = "Введите цену товара")]
 		public decimal Price { get; set; } = 0;
 		public List<ProductPicture> Pictures { get; set; } = new List<ProductPicture>();
-		public byte[]? NewPhotos { get; set; } = null!;
+		public IFormFileCollection NewPhotos { get; set; } = new FormFileCollection();
 
 		public CPUDetails? CpuDetails { get; set; } = null!;
 		public GPUDetails? GpuDetails { get; set; } = null!;
@@ -23,7 +30,7 @@ namespace HamsterWorld.Models
 			Description = product.Description;
 			Price = product.Price;
 
-			List<ProductPicture> Pictures = product.Pictures ?? new List<ProductPicture>();
+			Pictures = product.Pictures ?? new List<ProductPicture>();
 		}
 		public ProductDetailsBindingModel(CPU cpu) : this(cpu as Product)
 		{
@@ -41,8 +48,11 @@ namespace HamsterWorld.Models
 
 	public class CPUDetails
 	{
+		[Required(ErrorMessage = "Введите тактовую частоту процессора")]
 		public ushort ClockRate { get; set; } = 0;
+		[Required(ErrorMessage = "Введите количество ядер процессора")]
 		public ushort NumberOfCores { get; set; } = 0; 
+		[Required(ErrorMessage = "Введите сокет")]
 		public string Socket { get; set; } = "";
 
 		public CPUDetails(){}
@@ -56,7 +66,9 @@ namespace HamsterWorld.Models
 
 	public class GPUDetails
 	{
+		[Required(ErrorMessage = "Введите количество видеопамяти")]
 		public int VRAM { get; set; } = 0;
+		[Required(ErrorMessage = "Введите тип памяти видеокарты")]
 		public string MemoryType { get; set; } = ""; 
 
 		public GPUDetails(){}
@@ -69,7 +81,9 @@ namespace HamsterWorld.Models
 
 	public class RAMDetails
 	{
+		[Required(ErrorMessage = "Введите количество оперативной памяти")]
 		public int AmountOfMemory { get; set; } = 0;
+		[Required(ErrorMessage = "Введите тип памяти")]
 		public string MemoryType { get; set; } = ""; 
 
 		public RAMDetails(){}

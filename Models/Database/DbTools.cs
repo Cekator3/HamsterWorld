@@ -32,7 +32,7 @@ namespace HamsterWorld.DatabaseUtilities
 
 			await context.GPUs.AddAsync(gpu);
 			await context.SaveChangesAsync();
-			await AddMissingProductToAssortmentTable(context, ram.Id);
+			await AddMissingProductToAssortmentTable(context, gpu.Id);
 			return (true, "");
 		}
 
@@ -81,12 +81,13 @@ namespace HamsterWorld.DatabaseUtilities
 				addedItems.Add(item);
 			}
 			await context.Assortments.AddRangeAsync(addedItems);
+			await context.SaveChangesAsync();
 		}
 
 
 		public async static Task<(bool, string)> TryAddStoreToDatabase(ApplicationContext context, Store store)
 		{
-			if(await IsStoreWithThatAddressExistsInDatabase(context, store))
+			if(await IsStoreWithThatAddressAlreadyExist(context, store))
 			{
             return (false, "Такой магазин уже существует");
 			}
@@ -100,7 +101,7 @@ namespace HamsterWorld.DatabaseUtilities
 			return (true, "");		
 		}
 
-		private static async Task<bool> IsStoreWithThatAddressExistsInDatabase(ApplicationContext context, Store store)
+		private static async Task<bool> IsStoreWithThatAddressAlreadyExist(ApplicationContext context, Store store)
 		{
 			return await context.Stores.AnyAsync(e => e.Coordinates == store.Coordinates);
 		}
@@ -116,6 +117,7 @@ namespace HamsterWorld.DatabaseUtilities
 				await context.SaveChangesAsync();
 			}
 		}
+
 		//Добавить недостающие элементы в промежуточную таблицу (Product-Store)
 		private static async Task AddMissingStoreToAssortmentTable(ApplicationContext context, short storeId)
 		{
@@ -136,6 +138,7 @@ namespace HamsterWorld.DatabaseUtilities
 				addedItems.Add(item);
 			}
 			await context.Assortments.AddRangeAsync(addedItems);
+			await context.SaveChangesAsync();
 		}
 	}
 }

@@ -60,17 +60,9 @@ public class AdminStoreController : Controller
         return Redirect("ManageStores");
    }
 
-    public async Task<IActionResult> DeleteStore(int id)
+    public async Task<IActionResult> DeleteStore(short id)
     {
-        //Find store by id
-        Store? store = await _context.Stores.FindAsync(id);
-        if(store == null)
-        {
-            return NotFound("Такого филиала не существует");
-        }
-
-        _context.Stores.Remove(store);
-        await _context.SaveChangesAsync();
+        await DbUsageTools.RemoveStoreFromDatabase(_context, id);
 
         return RedirectToAction("ManageStores");
     }
@@ -223,7 +215,7 @@ public class AdminStoreController : Controller
             return (false, "Не удалось распознать адрес магазина");
         }
 
-        await DbUsageTools.TryAddStoreToDatabase(_context, store);
+        return await DbUsageTools.TryAddStoreToDatabase(_context, store);
     }
 
     async Task<Store?> TryFindStoreInfoWithDadataService(AddStoreBindingModel model)

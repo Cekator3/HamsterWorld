@@ -148,7 +148,7 @@ namespace HamsterWorld.Models
       public ushort OrderNumber { get; set; }
 
       //Константа
-      public const string PATH = "~/Images/";
+      public const string PATH = "/Images/Products/";
    }
 
    public class ShoppingList

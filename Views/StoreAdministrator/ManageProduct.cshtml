@@ -1,18 +1,20 @@
-@model ProductDetailsBindingModel?
+@model ProductDetailsBindingModel
 
 <h2>Информация о типе товара</h2>
 
-<form asp-action=@($"Manage{ViewBag.Category}") method="post">
+<form enctype="multipart/form-data" asp-action="ManageProduct" method="post">
 	<input readonly hidden asp-for="Id">
 
 	<div>
-		<label asp-for="Country">Страна</label>
+		<label asp-for="Country">Код страны (две буквы)</label>
 		<input asp-for="Country">
+		<span asp-validation-for="Country"></span>
 	</div>
 
 	<div>
 		<label asp-for="Model">Модель</label>
 		<input asp-for="Model">
+		<span asp-validation-for="Model"></span>
 	</div>
 
 	<div>
@@ -23,40 +25,29 @@
 	<div>
 		<label asp-for="Price">Цена</label>
 		<input asp-for="Price">
+		<span asp-validation-for="Price"></span>
 	</div>
 
-	@if(Model == null)
+	@if(Model.CpuDetails != null)
 	{
-		@switch (ViewBag.Category)
-		{
-			case Product.Categorys.CPU:
-				await Html.RenderPartialAsync("CPUDetailsForm");
-				break;
-			case Product.Categorys.GPU:
-				await Html.RenderPartialAsync("GPUDetailsForm");
-				break;
-			case Product.Categorys.RAM:
-				await Html.RenderPartialAsync("RAMDetailsForm");
-				break;
-		}
-	}
-	else if(Model.CpuDetails != null)
-	{
-		await Html.RenderPartialAsync("CPUDetailsForm", Model.CpuDetails);
+		@Html.EditorFor(m => m.CpuDetails!);
 	}
 	else if(Model.GpuDetails != null)
 	{
-		await Html.RenderPartialAsync("GPUDetailsForm", Model.GpuDetails);
+		@Html.EditorFor(m => m.GpuDetails!);
 	}
 	else if(Model.RamDetails != null)
 	{
-		await Html.RenderPartialAsync("RAMDetailsForm", Model.RamDetails);
+		@Html.EditorFor(m => m.RamDetails!);
 	}
-
 
 	<div class="galery">
 		<h2>Галерея</h2>
-		@foreach (ProductPicture picture in Model.Pictures.OrderBy(img => img.OrderNumber))
+		@if(Model.Pictures.Count == 0)
+		{
+			<p>Здесь пока что пусто</p>
+		}
+		@foreach (ProductPicture picture in Model.Pictures)
 		{
 			<button>Вправо</button>
 			<button>Влево</button>
@@ -66,8 +57,15 @@
 	</div>
 
 	<div>
-		<p>Загрузите новую фотку</p>
+		<h2>Загрузите новую фотку</h2>
+		<input asp-for="NewPhotos" type="file" multiple>
+		<span asp-validation-for="NewPhotos"></span>
 	</div>
 
 	<button type="submit">Сохранить</button>
 </form>
+
+<script src='@Url.Content("~/lib/jquery/dist/jquery.min.js")' type='text/javascript'></script>    
+<script src='@Url.Content("~/lib/jquery-validation/dist/jquery.validate.min.js")' type='text/javascript'></script>
+<script src='@Url.Content("~/lib/jquery-validation/dist/additional-methods.min.js")' type='text/javascript'></script>
+<script src='@Url.Content("~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min")' type='text/javascript'></script> 
