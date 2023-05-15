@@ -90,7 +90,7 @@ namespace HamsterWorld.Controllers
                     return NotFound("Такой категории не существует");
             }
 
-            ViewBag.Category = category;
+            ViewBag.StoreId = storeId;
             return View("ManageProducts", viewModel);
         }
 
@@ -208,29 +208,50 @@ namespace HamsterWorld.Controllers
             List<string> newPhotosFilesNames = await SaveNewPhotosToImageDirectory(productDetails);
 
 
-            //Aquire specific info
-            if(productDetails.CpuDetails != null)
+            //Edit existing product info
+            if(productDetails.Id >= 0)
             {
-                //Редактируется существующий продукт
-                if(productDetails.Id >= 0)
+                if(productDetails.CpuDetails != null)
                 {
                     CPU oldCPUInfo = (await _context.CPUs
                                             .Include(cpu => cpu.Pictures)
                                             .FirstOrDefaultAsync(cpu => cpu.Id == productDetails.Id))!;
                     
-                    oldCPUInfo.Country = productDetails.Country;
-                    oldCPUInfo.Model = productDetails.Model;
-                    oldCPUInfo.Description = productDetails.Description;
-                    oldCPUInfo.Price = productDetails.Price;
-                    oldCPUInfo.ClockRate = productDetails.CpuDetails.ClockRate;
-                    oldCPUInfo.NumberOfCores = productDetails.CpuDetails.NumberOfCores;
-                    oldCPUInfo.Socket = productDetails.CpuDetails.Socket;
+                    ApplyNewCharacteristicInfoToProduct(oldCPUInfo, productDetails);
 
-                    PutNewImagesIntoExistingProductEntityOfDatabase(oldCPUInfo, newPhotosFilesNames);
+                    PutNewImagesIntoProductInfo(oldCPUInfo, newPhotosFilesNames);
 
                     await _context.SaveChangesAsync();
                 }
-                else
+                else if(productDetails.GpuDetails != null)
+                {
+                    GPU oldGPUInfo = (await _context.GPUs
+                                            .Include(e => e.Pictures)
+                                            .FirstOrDefaultAsync(e => e.Id == productDetails.Id))!;
+                    
+                    ApplyNewCharacteristicInfoToProduct(oldGPUInfo, productDetails);
+
+                    PutNewImagesIntoProductInfo(oldGPUInfo, newPhotosFilesNames);
+
+                    await _context.SaveChangesAsync();
+                }
+                else if(productDetails.RamDetails != null)
+                {
+                    RAM oldRAMInfo = (await _context.RAMs
+                                            .Include(e => e.Pictures)
+                                            .FirstOrDefaultAsync(e => e.Id == productDetails.Id))!;
+                    
+                    ApplyNewCharacteristicInfoToProduct(oldRAMInfo, productDetails);
+
+                    PutNewImagesIntoProductInfo(oldRAMInfo, newPhotosFilesNames);
+
+                    await _context.SaveChangesAsync();
+                }
+            } 
+            // add new product info
+            else
+            {
+                if(productDetails.CpuDetails != null)
                 {
                     CPU newCPUInfo = new CPU()
                     {
@@ -244,18 +265,44 @@ namespace HamsterWorld.Controllers
                         Pictures = new List<ProductPicture>()
                     };
 
-                    PutNewImagesIntoExistingProductEntityOfDatabase(newCPUInfo, newPhotosFilesNames);
+                    PutNewImagesIntoProductInfo(newCPUInfo, newPhotosFilesNames);
 
                     await DbUsageTools.TryAddNewProductToDatabase(_context, newCPUInfo);
                 }
-            }
-            else if(productDetails.GpuDetails != null)
-            {
+                if(productDetails.GpuDetails != null)
+                {
+                    GPU newGPUInfo = new GPU()
+                    {
+                        Country = productDetails.Country,
+                        Model = productDetails.Model,
+                        Description = productDetails.Description,
+                        Price = productDetails.Price,
+                        VRAM = productDetails.GpuDetails.VRAM,
+                        MemoryType = productDetails.GpuDetails.MemoryType,
+                        Pictures = new List<ProductPicture>()
+                    };
 
-            }
-            else if(productDetails.RamDetails != null)
-            {
+                    PutNewImagesIntoProductInfo(newGPUInfo, newPhotosFilesNames);
 
+                    await DbUsageTools.TryAddNewProductToDatabase(_context, newGPUInfo);
+                }
+                if(productDetails.RamDetails != null)
+                {
+                    RAM newRamInfo = new RAM()
+                    {
+                        Country = productDetails.Country,
+                        Model = productDetails.Model,
+                        Description = productDetails.Description,
+                        Price = productDetails.Price,
+                        AmountOfMemory = productDetails.RamDetails.AmountOfMemory,
+                        MemoryType = productDetails.RamDetails.MemoryType,
+                        Pictures = new List<ProductPicture>()
+                    };
+
+                    PutNewImagesIntoProductInfo(newRamInfo, newPhotosFilesNames);
+
+                    await DbUsageTools.TryAddNewProductToDatabase(_context, newRamInfo);
+                }
             }
             return RedirectToAction("ChooseStore");
         }
@@ -268,19 +315,20 @@ namespace HamsterWorld.Controllers
 
 
 
-        async Task<Store> GetStoreWithLoadedCPUsDetails(string search, short storeId)
+        async Task<Store> GetStoreWithLoadedCPUsDetails(string searchFilter, short storeId)
         {
+            string search = searchFilter.ToLower();
             IQueryable<Store> query = _context.Stores.AsNoTracking();
 
             //Include CPUs that match the search filter
-            query = query.Include(store => store.CPUs!.Where(cpu => cpu.Model.Contains(search)));
+            query = query.Include(store => store.CPUs!.Where(cpu => cpu.Model.ToLower().Contains(search)));
 
             //Also load first picture of each CPU
-            query = query.Include(store => store.CPUs!.Where(cpu => cpu.Model.Contains(search)))
+            query = query.Include(store => store.CPUs!.Where(cpu => cpu.Model.ToLower().Contains(search)))
                             .ThenInclude(store => store.Pictures!.OrderBy(pic => pic.OrderNumber).Take(1));
 
             //Also load amount of CPU that contains in that store
-            query = query.Include(store => store.CPUs!.Where(cpu => cpu.Model.Contains(search)))
+            query = query.Include(store => store.CPUs!.Where(cpu => cpu.Model.ToLower().Contains(search)))
                             .ThenInclude(cpu => cpu.Assortments);
 
             query = query.OrderBy(store => store.Id)
@@ -483,7 +531,7 @@ namespace HamsterWorld.Controllers
             return picturesFileNames;
         }
 
-        public void PutNewImagesIntoExistingProductEntityOfDatabase(Product product, List<string> newPhotosFilesNames)
+        public void PutNewImagesIntoProductInfo(Product product, List<string> newPhotosFilesNames)
         {
             ushort lastPictureOrderNumber = 1;
 
@@ -503,6 +551,44 @@ namespace HamsterWorld.Controllers
 
                 lastPictureOrderNumber++;
             }
+        }
+
+        public CPU ApplyNewCharacteristicInfoToProduct(CPU oldCpuInfo, ProductDetailsBindingModel newCpuInfo)
+        {
+            oldCpuInfo.Country = newCpuInfo.Country;
+            oldCpuInfo.Model = newCpuInfo.Model;
+            oldCpuInfo.Description = newCpuInfo.Description;
+            oldCpuInfo.Price = newCpuInfo.Price;
+
+            oldCpuInfo.ClockRate = newCpuInfo.CpuDetails!.ClockRate;
+            oldCpuInfo.NumberOfCores = newCpuInfo.CpuDetails.NumberOfCores;
+            oldCpuInfo.Socket = newCpuInfo.CpuDetails.Socket;
+
+            return oldCpuInfo;
+        }
+        public GPU ApplyNewCharacteristicInfoToProduct(GPU oldGpuInfo, ProductDetailsBindingModel newGpuInfo)
+        {
+            oldGpuInfo.Country = newGpuInfo.Country;
+            oldGpuInfo.Model = newGpuInfo.Model;
+            oldGpuInfo.Description = newGpuInfo.Description;
+            oldGpuInfo.Price = newGpuInfo.Price;
+
+            oldGpuInfo.VRAM = newGpuInfo.GpuDetails!.VRAM;
+            oldGpuInfo.MemoryType = newGpuInfo.GpuDetails.MemoryType;
+
+            return oldGpuInfo;
+        }
+        public RAM ApplyNewCharacteristicInfoToProduct(RAM oldRamInfo, ProductDetailsBindingModel newRamInfo)
+        {
+            oldRamInfo.Country = newRamInfo.Country;
+            oldRamInfo.Model = newRamInfo.Model;
+            oldRamInfo.Description = newRamInfo.Description;
+            oldRamInfo.Price = newRamInfo.Price;
+
+            oldRamInfo.AmountOfMemory = newRamInfo.RamDetails!.AmountOfMemory;
+            oldRamInfo.MemoryType = newRamInfo.RamDetails.MemoryType;
+
+            return oldRamInfo;
         }
     }
 }

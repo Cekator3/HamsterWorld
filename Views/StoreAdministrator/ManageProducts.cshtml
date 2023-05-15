@@ -1,5 +1,16 @@
 ﻿@model List<ProductAmountBindingModel>
 <div>
+    <form method="get">
+        <label>Поиск:</label>
+        <input name="searchFilter">
+        <input hidden name="category" value=@ViewBag.Category>
+        <input hidden name="storeId" value=@ViewBag.StoreId>
+        <button type="submit">Применить</button>
+    </form>
+</div>
+
+
+<div>
     @foreach (ProductAmountBindingModel product in Model)
     {
         <div class="col-lg-4" id="@product.Id">
