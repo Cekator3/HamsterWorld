@@ -4,6 +4,8 @@
 
 <form enctype="multipart/form-data" asp-action="ManageProduct" method="post">
 	<input readonly hidden asp-for="Id">
+	<input readonly hidden asp-for="StoreId">
+	<input readonly hidden asp-for="Category">
 
 	<div>
 		<label asp-for="Country">Код страны (две буквы)</label>

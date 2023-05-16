@@ -20,10 +20,10 @@
             <p>Количество: <input value=@product.Amount class="Amount"></p>
         </div>
         <div>
-            <a asp-action="ManageProduct" asp-route-category=@ViewBag.Category asp-route-id=@product.Id>Изменить информацию о этом виде товара</a>
+            <a asp-action="ManageProduct" asp-route-category=@ViewBag.Category asp-route-storeId=@ViewBag.StoreId asp-route-id=@product.Id>Изменить информацию о этом виде товара</a>
         </div>
     }
     <div class="col-lg-4">
-        <a asp-action="ManageProduct" asp-route-category=@ViewBag.Category>Добавить новый вид товара</a>
+        <a asp-action="ManageProduct" asp-route-category=@ViewBag.Category asp-route-storeId=@ViewBag.StoreId>Добавить новый вид товара</a>
     </div>
 </div>

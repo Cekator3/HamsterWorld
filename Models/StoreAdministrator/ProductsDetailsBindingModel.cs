@@ -4,6 +4,9 @@ namespace HamsterWorld.Models
 {
 	public class ProductDetailsBindingModel
 	{
+		//Для возвращения обратно на страницу редактирования
+		public int StoreId { get; set; }
+		public byte Category { get; set; }
 		//Id существующего типа товара
 		public int Id { get; set; } = -1;
 		[Required(ErrorMessage = "Введите страну производителя")]
@@ -15,7 +18,7 @@ namespace HamsterWorld.Models
 		[Required(ErrorMessage = "Введите цену товара")]
 		public decimal Price { get; set; } = 0;
 		public List<ProductPicture> Pictures { get; set; } = new List<ProductPicture>();
-		public IFormFileCollection NewPhotos { get; set; } = new FormFileCollection();
+		public IFormFileCollection? NewPhotos { get; set; } = new FormFileCollection();
 
 		public CPUDetails? CpuDetails { get; set; } = null!;
 		public GPUDetails? GpuDetails { get; set; } = null!;

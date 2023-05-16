@@ -91,10 +91,11 @@ namespace HamsterWorld.Controllers
             }
 
             ViewBag.StoreId = storeId;
+            ViewBag.Category = category;
             return View("ManageProducts", viewModel);
         }
 
-        public async Task<IActionResult> ManageProduct(int? id, byte? category)
+        public async Task<IActionResult> ManageProduct(int? id, byte? category, short storeId)
         {
             if(category == null || !Enum.IsDefined(typeof(Product.Categorys), category))
             {
@@ -108,6 +109,8 @@ namespace HamsterWorld.Controllers
             {
                 model = new ProductDetailsBindingModel();
                 model.Id = -1;
+                model.StoreId = storeId;
+                model.Category = (byte)category;
                 switch((byte)category)
                 {
                     case (byte)Product.Categorys.CPU:
@@ -167,6 +170,8 @@ namespace HamsterWorld.Controllers
                 return NotFound("Товар не найден");
             }
 
+            model.StoreId = storeId;
+            model.Category = (byte)category;
             return View(model);
         }
 
@@ -183,7 +188,7 @@ namespace HamsterWorld.Controllers
             {
                 ModelState.AddModelError(nameof(productDetails.Country), "Цена не может быть отрицательной");
             }
-            (bool filesAreFine, string Message) = IsUploadedFilesNotBreakingRules(productDetails.NewPhotos);
+            (bool filesAreFine, string Message) = IsUploadedFilesNotBreakingRules(productDetails.NewPhotos!);
             if(!filesAreFine)
             {
                 ModelState.AddModelError(nameof(productDetails.Country), Message);
@@ -304,7 +309,7 @@ namespace HamsterWorld.Controllers
                     await DbUsageTools.TryAddNewProductToDatabase(_context, newRamInfo);
                 }
             }
-            return RedirectToAction("ChooseStore");
+            return RedirectToAction("ManageProducts", new { storeId = productDetails.StoreId, category = productDetails.Category});
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
@@ -339,20 +344,21 @@ namespace HamsterWorld.Controllers
 
             return store;
         }
-        async Task<Store> GetStoreWithLoadedGPUsDetails(string search, short storeId)
+        async Task<Store> GetStoreWithLoadedGPUsDetails(string searchFilter, short storeId)
         {
             //Почти полное повторение GetStoreWithLoadedCPUDetails
+            string search = searchFilter.ToLower();
             IQueryable<Store> query = _context.Stores.AsNoTracking();
 
             //Include GPUs that match the search filter
-            query = query.Include(store => store.GPUs!.Where(gpu => gpu.Model.Contains(search)));
+            query = query.Include(store => store.GPUs!.Where(gpu => gpu.Model.ToLower().Contains(search)));
 
             //Also load first picture of each GPU
-            query = query.Include(store => store.GPUs!.Where(gpu => gpu.Model.Contains(search)))
+            query = query.Include(store => store.GPUs!.Where(gpu => gpu.Model.ToLower().Contains(search)))
                             .ThenInclude(store => store.Pictures!.OrderBy(pic => pic.OrderNumber).Take(1));
 
             //Also load amount of GPU that contains in that store
-            query = query.Include(store => store.GPUs!.Where(gpu => gpu.Model.Contains(search)))
+            query = query.Include(store => store.GPUs!.Where(gpu => gpu.Model.ToLower().Contains(search)))
                             .ThenInclude(gpu => gpu.Assortments);
 
             query = query.OrderBy(store => store.Id)
@@ -364,20 +370,21 @@ namespace HamsterWorld.Controllers
             return store;
         }
 
-        async Task<Store> GetStoreWithLoadedRAMsDetails(string search, short storeId)
+        async Task<Store> GetStoreWithLoadedRAMsDetails(string searchFilter, short storeId)
         {
             //Почти полное повторение GetStoreWithLoadedCPUDetails
+            string search = searchFilter.ToLower();
             IQueryable<Store> query = _context.Stores.AsNoTracking();
 
             //Include RAMs that match the search filter
-            query = query.Include(store => store.RAMs!.Where(ram => ram.Model.Contains(search)));
+            query = query.Include(store => store.RAMs!.Where(ram => ram.Model.ToLower().Contains(search)));
 
             //Also load first picture of each RAM
-            query = query.Include(store => store.RAMs!.Where(ram => ram.Model.Contains(search)))
+            query = query.Include(store => store.RAMs!.Where(ram => ram.Model.ToLower().Contains(search)))
                             .ThenInclude(store => store.Pictures!.OrderBy(pic => pic.OrderNumber).Take(1));
 
             //Also load amount of RAM that contains in that store
-            query = query.Include(store => store.RAMs!.Where(ram => ram.Model.Contains(search)))
+            query = query.Include(store => store.RAMs!.Where(ram => ram.Model.ToLower().Contains(search)))
                             .ThenInclude(ram => ram.Assortments);
 
             query = query.OrderBy(store => store.Id)
