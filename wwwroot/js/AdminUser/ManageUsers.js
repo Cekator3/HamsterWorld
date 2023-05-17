@@ -1,28 +1,27 @@
-roleCells = document.querySelectorAll('.newRoleName');
-
-roleCells.forEach(cell => {
-	cell.addEventListener('change', SaveChanges)
-});
+$('.newRoleName').change(SaveChanges);
 
 function SaveChanges()
 {
 	let login = this.getAttribute('login');
 	let newRole = this.value;
+	let answerField = $('#xhrAnswer');
 
-	let xhr = new XMLHttpRequest();
-	xhr.open('POST', `/AdminUser/ManageUsers?login=${login}&newRole=${newRole}`);
-	xhr.send();
+	$.post("/AdminUser/ManageUsers", {'login': login, 'newRole': newRole},
+		function (data, textStatus, jqXHR) 
+		{
+			if(jqXHR.status == 200)
+			{
+				answerField.text("Изменения сохранены");
+			}		
+			else
+			{
+				answerField.text(textStatus);
+			}
 
-	let answerField = document.querySelector('#xhrAnswer')
-	xhr.onload = function() 
-	{
-		if(xhr.status == 200)
-		{
-			answerField.innerHTML = "Изменения сохранены";
-		}
-		else
-		{
-			answerField.innerHTML = xhr.responseText;
-		}
-	}
+			setTimeout(function()
+			{
+				answerField.text("");
+			}, 3000)
+		},
+	);
 }

@@ -1,11 +1,13 @@
 @model GPUDetails
 
-<div>
+<div class="form-group mb-2">
 	<label asp-for="MemoryType">Тип памяти</label>
-	<input asp-for="MemoryType">
+	<input asp-for="MemoryType" class="form-group">
+	<span asp-validation-for="MemoryType" class="text-danger"></span>
 </div>
 
-<div>
+<div class="form-group mb-2">
 	<label asp-for="VRAM">Количество памяти</label>
-	<input asp-for="VRAM">
+	<input asp-for="VRAM" class="form-group">
+	<span asp-validation-for="VRAM" class="text-danger"></span>
 </div>

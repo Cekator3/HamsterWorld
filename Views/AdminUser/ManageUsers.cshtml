@@ -1,36 +1,49 @@
 ﻿@model List<UserInfoBindingModel>
+@{
+    ViewBag.Title = "Роли пользователей";
+}
+<div class="container">
+    <div class="row">
+        <div class="col-3 px-0">
+            <div id="xhrAnswer" class="text-danger"></div>
+        </div>
+    </div>
+    <div class="row mb-4">
+        <form asp-controller="AdminUser" asp-action="ManageUsers" method="get" class="input-group mx-0 px-0">
+            <div class="col-sm-4 col-9">
+                <input name="Search" type="search" class="form-control" placeholder="Поиск">
+            </div>
+            <div class="col-3">
+                <button type="submit" class="btn btn-primary">Поиск</button>
+            </div>
+        </form>
+    </div>
+    <div class="row">
+        <table id="Users" class="table">
+            <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Логин</th>
+                    <th scop="col">Email</th>
+                    <th scope="col">Роль</th>
+                </tr>
+            </thead>
 
-<div id="xhrAnswer"></div>
+            <tbody id="usersTableBody">
+                @for (byte i = 0; i < Model.Count; i++)
+                {
+                    SelectList roles = new SelectList(UserInfoBindingModel.AllRoles, Model[i].Role);
 
-<form asp-controller="AdminUser" asp-action="ManageUsers" method="get">
-    <label>Поиск:</label>
-    <input name="Search">
-    <button type="submit">Применить</button>
-</form>
-
-<table id="Users" class="table">
-    <thead>
-        <tr>
-            <th scope="col">#</th>
-            <th scope="col">Логин</th>
-            <th scop="col">Email</th>
-            <th scope="col">Роль</th>
-        </tr>
-    </thead>
-
-    <tbody id="usersTableBody">
-        @for (byte i = 0; i < Model.Count; i++)
-        {
-            SelectList roles = new SelectList(UserInfoBindingModel.AllRoles, Model[i].Role);
-
-            <tr>
-                <th scope="row">@(i + 1)</th>
-                <th scope="row">@Model[i].Login</th>
-                <th scope="row">@Model[i].Email</th>
-                <th scope="row">@Html.DropDownList("newRoleName", roles, null, new {@class="newRoleName", @login=$"{Model[i].Login}"})</th>
-            </tr>
-        }
-    </tbody>
-</table>
+                    <tr>
+                        <th scope="row">@(i + 1)</th>
+                        <th scope="row">@Model[i].Login</th>
+                        <th scope="row">@Model[i].Email</th>
+                        <th scope="row">@Html.DropDownList("newRoleName", roles, null, new {@class="newRoleName", @login=$"{Model[i].Login}"})</th>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
 
 <script src="~/js/AdminUser/ManageUsers.js"></script>

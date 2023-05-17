@@ -312,6 +312,35 @@ namespace HamsterWorld.Controllers
             return RedirectToAction("ManageProducts", new { storeId = productDetails.StoreId, category = productDetails.Category});
         }
 
+		[HttpPost]
+        public async Task<IActionResult> ChangeProductAmount(short? storeId, int? productId, int? amount)
+        {
+            if(storeId == null || productId == null || amount == null)
+            {
+                return BadRequest("Неверный формат данных");
+            }
+
+            Store? store = await _context.Stores.FindAsync(storeId);
+            if(store == null)
+            {
+                return NotFound("Такого магазина не существует");
+            }
+            if(!(await IsUserAdminOfStore(store)))
+            {
+                return Unauthorized("Вы не являетесь администратором этого магазина");
+            }
+
+            Assortment? assortment=  await _context.Assortments.FindAsync(storeId, productId);
+            if(assortment == null)
+            {
+                return NotFound("Товара с таким Id не было найдено");
+            }
+
+            assortment.Amount = (int)amount;
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {

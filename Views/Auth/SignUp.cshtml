@@ -2,38 +2,39 @@
 @{
     ViewBag.Title = "Регистрация";
 }
-
-<form asp-controller="Auth" asp-action="SignUp" method="post" asp-antiforgery="true">
-    <div class="validation" asp-validation-summary="ModelOnly"></div>
-
-    <div>
-        <div class="form-group">
+<div class="container justify-content-center">
+    <form asp-controller="Auth" asp-action="SignUp" method="post" asp-antiforgery="true">
+        <div class="validation" asp-validation-summary="ModelOnly"></div>
+        <div class="form-group mb-2">
             <label for="Login">Введите логин</label>
-            <input asp-for="Login">
-            <span asp-validation-for="Login"></span>
+            <input asp-for="Login" class="form-control" placeholder="Логин">
+            <span asp-validation-for="Login" class="text-danger"></span>
         </div>
-        <div class="form-group">
+        <div class="form-group mb-2">
             <label for="Email">Введите электронную почту</label>
-            <input asp-for="Email">
-            <span asp-validation-for="Email"></span>
+            <input asp-for="Email" class="form-control" placeholder="Электронная почта">
+            <span asp-validation-for="Email" class="text-danger"></span>
         </div>
-        <div class="form-group">
+        <div class="form-group mb-2">
             <label for="Password">Введите пароль</label>
-            <input asp-for="Password">
-            <span asp-validation-for="Password"></span>
+            <input asp-for="Password" class="form-control" placeholder="Пароль">
+            <span asp-validation-for="Password" class="text-danger"></span>
         </div>
-        <div class="form-group">
+        <div class="form-group mb-2">
             <label for="PasswordConfirm">Повторите пароль</label>
-            <input asp-for="PasswordConfirm">
-            <span asp-validation-for="PasswordConfirm"></span>
+            <input asp-for="PasswordConfirm" class="form-control" placeholder="Подтверждение пароля">
+            <span asp-validation-for="PasswordConfirm" class="text-danger"></span>
         </div>
-        <img src="/Auth/GetCaptchaImg">
-        <div class="form-group">
-            <label for="CaptchaUserAnswer">Введите капчу</label>
-            <input asp-for="CaptchaUserAnswer">
-            <span asp-validation-for="CaptchaUserAnswer"></span>
+        <div class="form-group mb-2">
+            <label for="CaptchaUserAnswer" class="mb-2">Введите капчу</label>
+            <div class="mb-2">
+                <img src="/Auth/GetCaptchaImg" class="img-fluid">
+            </div>
+            <div class="mb-2">
+                <input asp-for="CaptchaUserAnswer" class="form-control" placeholder="Ответ на капчу">
+            </div>
+            <span asp-validation-for="CaptchaUserAnswer" class="text-danger"></span>
         </div>
-
-        <button type="submit">Завершить</button>
-    </div>
-</form> 
+        <button type="submit" class="btn btn-primary">Завершить</button>
+    </form> 
+</div>

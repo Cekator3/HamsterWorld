@@ -114,7 +114,11 @@ namespace HamsterWorld.Controllers
 			if (ModelState.IsValid)
 			{
 				await SendAuthCookiesToUser(user!);
-				return Redirect(model.ReturnUrl ?? "/");
+				if(string.IsNullOrEmpty(model.ReturnUrl))
+				{
+					return Redirect("/");
+				}
+				return Redirect(model.ReturnUrl);
 			}
 
 			return View(model);

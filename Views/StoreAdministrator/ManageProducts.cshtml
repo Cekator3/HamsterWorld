@@ -1,29 +1,50 @@
 ﻿@model List<ProductAmountBindingModel>
-<div>
-    <form method="get">
-        <label>Поиск:</label>
-        <input name="searchFilter">
-        <input hidden name="category" value=@ViewBag.Category>
-        <input hidden name="storeId" value=@ViewBag.StoreId>
-        <button type="submit">Применить</button>
-    </form>
-</div>
-
-
-<div>
+<div class="container-fluid">
+    <div class="row">
+        <h1>Виды товаров</h1>
+    </div>
+    <div class="row mb-4">
+        <form method="get" class="input-group">
+            <div class="col-sm-4 col-9">
+                <input name="searchFilter" class="form-control rounded" type="text" placeholder="Поиск" aria-label="Поиск">
+            </div>
+            <div class="col-3">
+                <button type="submit" class="btn btn-outline-primary">Применить</button>
+            </div>
+            <input hidden name="category" value=@ViewBag.Category>
+            <input hidden name="storeId" value=@ViewBag.StoreId>
+        </form>
+    </div>
     @foreach (ProductAmountBindingModel product in Model)
     {
-        <div class="col-lg-4" id="@product.Id">
-            <img class="img-thumbnail" src="@product.PictureSrc" alt="Картинка">
-            <h2>@product.ToString()</h2>
-            <p>@product.Price руб.</p>
-            <p>Количество: <input value=@product.Amount class="Amount"></p>
-        </div>
-        <div>
-            <a asp-action="ManageProduct" asp-route-category=@ViewBag.Category asp-route-storeId=@ViewBag.StoreId asp-route-id=@product.Id>Изменить информацию о этом виде товара</a>
+        <div class="row mb-4" storeId="@ViewBag.StoreId" productId="@product.Id">
+            <div class="col-12 col-sm-3" style="max-width: 300px;">
+                <img class="img-thumbnail" src="@product.PictureSrc" alt="Картинка">
+            </div>
+            <div class="col-12 col-sm-6">
+                <div class="product-info">
+                    <p>
+                        <mark>
+                            <a asp-action="ManageProduct" style="text-decoration: none;" asp-route-category=@ViewBag.Category asp-route-storeId=@ViewBag.StoreId asp-route-id=@product.Id>@product.ToString()</a>
+                        </mark>
+                    </p>
+                </div>
+            </div>
+            <div class="col-12 col-sm-3">
+                <div class="product-price">
+                    <p>@product.Price руб.</p>
+                </div>
+                <div class="product-amount">
+                    <p>Количество: <input type="number" value=@product.Amount class="form-control rounded amountOfProduct"></p>
+                </div>
+                <span class="text-danger error"></span>
+                <span class="text-info ok"></span>
+            </div>
         </div>
     }
-    <div class="col-lg-4">
-        <a asp-action="ManageProduct" asp-route-category=@ViewBag.Category asp-route-storeId=@ViewBag.StoreId>Добавить новый вид товара</a>
+    <div class="row px-0" id="addNew">
+        <a asp-action="ManageProduct" asp-route-category=@ViewBag.Category asp-route-storeId=@ViewBag.StoreId>+</a>
     </div>
 </div>
+
+<script src="~/js/StoreAdministrator/ManageProducts.js"></script>

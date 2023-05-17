@@ -20,3 +20,27 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+#addNew
+{
+  cursor: pointer;
+  font-size: 100px;
+  font-weight: bold;
+  margin-bottom: 8px;
+  vertical-align: central;
+  align-items: center;
+  text-align: center;
+  color: rgb(73, 73, 73);
+}
+#addNew a
+{
+  text-decoration: none;
+  color: unset;
+}
+#addNew:hover
+{
+  border: dashed grey;
+  color: grey;
+  margin-top: -3px;
+  margin-bottom: 5px;
+}
