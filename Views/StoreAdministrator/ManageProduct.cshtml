@@ -6,7 +6,7 @@
 	<div class="row">
 		<h2>Информация о типе товара</h2>
 	</div>
-	<div class="row">
+	<div class="row mb-3">
 		<form enctype="multipart/form-data" asp-action="ManageProduct" method="post">
 			<input readonly hidden asp-for="Id">
 			<input readonly hidden asp-for="StoreId">
@@ -58,18 +58,44 @@
 		</form>
 	</div>
 
-	<div class="galery row">
-		<h2>Галерея</h2>
-		@if(Model.Pictures.Count == 0)
+	<div class="row">
+		<div class="col-12">
+			<h2 class="text-center">Галерея</h2>
+		</div>
+	</div>
+	<div class="row mb-3">
+		<div class="col-6 mx-auto">
+			<button class="btn btn-success save-changes" disabled style="width: 100%;">Сохранить изменения</button>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-12">
+			@if(Model.Pictures.Count == 0)
+			{
+				<p>Здесь пока что пусто</p>
+			}
+		</div>
+	</div>
+	<div class="d-flex flex-column px-0">
+		@foreach (ProductPicture picture in Model.Pictures.OrderByDescending(pic => pic.OrderNumber))
 		{
-			<p>Здесь пока что пусто</p>
-		}
-		@foreach (ProductPicture picture in Model.Pictures)
-		{
-			<button>Вправо</button>
-			<button>Влево</button>
-			<img src=@($"{ProductPicture.PATH}{picture.FileName}") alt="Картинка" class="order-@picture.OrderNumber">
-			<button asp-action="deletePhoto" asp-route-id="@picture.Id">Удалить фотку</button>
+			<div class="container picture-galery px-0 order-@picture.OrderNumber">
+				<div class="row" pictureId="@picture.Id">
+					<div class="btn-group col-6 mx-auto" role="group">
+						<button class="btn btn-primary picture-up">Вверх</button>
+						<button class="btn btn-danger picture-delete">Удалить фотку</button>
+						<button class="btn btn-primary picture-down">Вниз</button>
+					</div>
+				</div>
+				
+				<div class="row mb-5">
+					<div class="col-6 mx-auto">
+						<img src=@($"{ProductPicture.PATH}{picture.FileName}") alt="Картинка"  style="width: 100%;">
+					</div>
+				</div>
+			</div>
 		}
 	</div>
 </div>
+
+<script src="~/js/StoreAdministrator/ManageProduct.js"></script>

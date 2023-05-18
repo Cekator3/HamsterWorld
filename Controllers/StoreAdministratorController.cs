@@ -573,7 +573,7 @@ namespace HamsterWorld.Controllers
 
             if(product.Pictures!.Count != 0)
             {
-                lastPictureOrderNumber = product.Pictures.Max(e => e.OrderNumber);
+                lastPictureOrderNumber = (ushort)(product.Pictures.Max(e => e.OrderNumber) + 1);
             }
 
             foreach(string fileName in newPhotosFilesNames)
