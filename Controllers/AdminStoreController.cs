@@ -190,6 +190,8 @@ public class AdminStoreController : Controller
         return Ok();
     }
 
+
+
     bool IsWorkingScheduleTooShort(TimeOnly openingTime, TimeOnly closingTime)
     {
         long minWorkingTime = new TimeOnly(hour: 4, minute: 0).Ticks;

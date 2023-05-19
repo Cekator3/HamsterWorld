@@ -191,7 +191,7 @@ namespace HamsterWorld.Controllers
             (bool filesAreFine, string Message) = IsUploadedFilesNotBreakingRules(productDetails.NewPhotos!);
             if(!filesAreFine)
             {
-                ModelState.AddModelError(nameof(productDetails.Country), Message);
+                ModelState.AddModelError(nameof(productDetails.NewPhotos), Message);
             }
             if(productDetails.Id >= 0)
             {
@@ -338,6 +338,58 @@ namespace HamsterWorld.Controllers
 
             assortment.Amount = (int)amount;
             await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        [HttpDelete]
+        public async Task<IActionResult> ManagePictures(int[] picturesToDelete)
+        {
+            if(picturesToDelete.Length == 0)
+            {
+                return BadRequest("Не было предоставлено ни одного pictureId");
+            }
+
+            //obtaining fileNames from db
+            List<string> fileNamesOfPictures = await _context.ProductsPictures
+                                                            .AsNoTracking()
+                                                            .Where(img => picturesToDelete.Contains(img.Id))
+                                                            .Select(img => img.FileName)
+                                                            .ToListAsync();
+
+            //deleting pictures from db 
+            await _context.ProductsPictures.Where(img => picturesToDelete.Contains(img.Id)).ExecuteDeleteAsync();
+
+            DeleteProductPicturesFromFileSystem(fileNamesOfPictures);
+
+            return Ok();
+        }
+
+        [HttpPut]
+        public async Task<IActionResult> ManagePictures(List<PicturesOrderInfo> picturesOrderInfo)
+        {
+            if(picturesOrderInfo.Count == 0)
+            {
+                return BadRequest("Неверный формат входных данных");
+            }
+            List<int> picturesIds = picturesOrderInfo.Select(img => img.Id).ToList();
+
+            //Obtaining pictures whose Id is in the request
+            List<ProductPicture> pictures = await _context.ProductsPictures
+                                                            .Where(img => picturesIds.Contains(img.Id))
+                                                            .ToListAsync();
+
+            if(pictures.Count == 0)
+            {
+                return BadRequest("Ни один из предоставленных Id не соответствует ни одной сущности из базы данных");
+            }
+
+            foreach(ProductPicture picture in pictures)
+            {
+                picture.OrderNumber = picturesOrderInfo.First(img => img.Id == picture.Id).OrderNumber;
+            }
+
+            await _context.SaveChangesAsync();
+
             return Ok();
         }
 
@@ -625,6 +677,26 @@ namespace HamsterWorld.Controllers
             oldRamInfo.MemoryType = newRamInfo.RamDetails.MemoryType;
 
             return oldRamInfo;
+        }
+
+        public void DeleteProductPicturesFromFileSystem(List<string> fileNames)
+        {
+            string pathToProductsPictures = Path.Combine(_env.ContentRootPath, "wwwroot/Images/Products/");
+            if( !Directory.Exists(pathToProductsPictures) )
+            {
+                throw new Exception("Каталога wwwroot/Images/Products/ не существует");
+            }
+            
+            foreach(string fileName in fileNames)
+            {
+                string imgPath = Path.Combine(pathToProductsPictures, fileName);
+
+                FileInfo picture = new FileInfo(imgPath);
+                if(picture.Exists)
+                {
+                    picture.Delete();
+                }
+            }
         }
     }
 }

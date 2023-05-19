@@ -64,8 +64,20 @@
 		</div>
 	</div>
 	<div class="row mb-3">
-		<div class="col-6 mx-auto">
-			<button class="btn btn-success save-changes" disabled style="width: 100%;">Сохранить изменения</button>
+		<div class="col-12 text-center">
+			<span class="text-danger fw-bold" id="delete-error"></span>
+			<span class="text-info fw-bold" id="delete-ok"></span>
+		</div>
+	</div>
+	<div class="row mb-3">
+		<div class="col-12 text-center">
+			<span class="text-danger fw-bold" id="update-error"></span>
+			<span class="text-info fw-bold" id="update-ok"></span>
+		</div>
+	</div>
+	<div class="row mb-3">
+		<div class="col-6 mx-auto mb-3">
+			<button class="btn btn-success" id="save-changes" disabled style="width: 100%;">Сохранить изменения</button>
 		</div>
 	</div>
 	<div class="row">
@@ -79,8 +91,8 @@
 	<div class="d-flex flex-column px-0">
 		@foreach (ProductPicture picture in Model.Pictures.OrderByDescending(pic => pic.OrderNumber))
 		{
-			<div class="container picture-galery px-0 order-@picture.OrderNumber">
-				<div class="row" pictureId="@picture.Id">
+			<div class="container picture-galery px-0 order-@picture.OrderNumber" pictureId="@picture.Id">
+				<div class="row">
 					<div class="btn-group col-6 mx-auto" role="group">
 						<button class="btn btn-primary picture-up">Вверх</button>
 						<button class="btn btn-danger picture-delete">Удалить фотку</button>
