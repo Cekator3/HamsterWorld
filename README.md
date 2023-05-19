@@ -19,7 +19,8 @@ TODO:
 
 7) Личный профиль (в нём отображаются аватарка, последние комментарии)
 
-Dotnet User-secrets:
+#Dotnet User-secrets:
+
 YandexStaticMapQuery = https://static-maps.yandex.ru/1.x/?ll=69.03829587280266,60.99365336511335&bbox=68.98147595703118,60.9676724525776~69.09511578857413,61.01961297975412&size=450,450&l=map&scale=1.1 
 
 Dadata:Secret = 8b9421afa7e93ddebbf10e1aea14a2adfc1fbe2d 
