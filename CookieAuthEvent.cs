@@ -14,7 +14,7 @@ public class CustomCookieAuthenticationEvents : CookieAuthenticationEvents
 	public override async Task ValidatePrincipal(CookieValidatePrincipalContext context)
 	{
 		//if refresh cookie and Auth Cookie are existing
-		if(context.Request.Cookies.ContainsKey("RefreshCookie") || context.Request.Cookies.ContainsKey("MyCookie"))
+		if(context.Request.Cookies.ContainsKey("RefreshCookie") && !context.Request.Cookies.ContainsKey("MyCookie"))
 		{
 			return;
 		}
@@ -25,9 +25,7 @@ public class CustomCookieAuthenticationEvents : CookieAuthenticationEvents
 		//If auth cookies has been corrupted
 		if(userId == null)
 		{
-			context.Response.Cookies.Delete("RefreshCookie");
-			context.RejectPrincipal();
-			await context.HttpContext.SignOutAsync("Cookies");
+			await LogoutUser(context);
 			return;
 		}
 
@@ -35,6 +33,8 @@ public class CustomCookieAuthenticationEvents : CookieAuthenticationEvents
 		UserWithChangedRole? userFromBlacklist = await _context.Blacklist.FindAsync(userId);
 		if(userFromBlacklist != null)
 		{
+			await LogoutUser(context);
+
 			_context.Blacklist.Remove(userFromBlacklist!);
 			await _context.SaveChangesAsync();
 			return;
@@ -72,5 +72,12 @@ public class CustomCookieAuthenticationEvents : CookieAuthenticationEvents
 		opt.HttpOnly = true;
 		opt.SameSite = SameSiteMode.Strict;
 		context.Response.Cookies.Append("RefreshCookie", "", opt);
+	}
+
+	private async Task LogoutUser(CookieValidatePrincipalContext context)
+	{
+		context.Response.Cookies.Delete("RefreshCookie");
+		context.RejectPrincipal();
+		await context.HttpContext.SignOutAsync("Cookies");
 	}
 }

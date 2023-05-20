@@ -45,13 +45,16 @@ public class AdminStoreController : Controller
         {
             ModelState.AddModelError(nameof(model.OpeningTime), "Рабочее время не может быть меньше четырёх часов");
         }
+        if(!ModelState.IsValid)
+        {
+            return View(model);
+        }
 
         (bool IsSuccess, string Message) = await TryAddNewStoreToDatabase(model);
         if( !IsSuccess )
         {
             ModelState.AddModelError(nameof(model.Address), Message);
         }
-
         if(!ModelState.IsValid)
         {
             return View(model);
@@ -280,7 +283,7 @@ public class AdminStoreController : Controller
         //Проверяем, если новый адрес магазина соответствует адресам других магазинов
         if(oldStoreInfo.Address != newStoreInfo.Address)
         {
-            if (_context.Stores.AsNoTracking().FirstOrDefaultAsync(e => e.Address == model.Address) != null)
+            if (await _context.Stores.AsNoTracking().AnyAsync(e => e.Address == model.Address))
             {
                 return (false, "Другой магазин с таким адресом уже существует");
             }

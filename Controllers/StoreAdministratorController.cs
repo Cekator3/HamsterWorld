@@ -415,7 +415,7 @@ namespace HamsterWorld.Controllers
 
             //Also load amount of CPU that contains in that store
             query = query.Include(store => store.CPUs!.Where(cpu => cpu.Model.ToLower().Contains(search)))
-                            .ThenInclude(cpu => cpu.Assortments);
+                            .ThenInclude(cpu => cpu.Assortments!.Where(assortment => assortment.StoreId == storeId));
 
             query = query.OrderBy(store => store.Id)
                         .Take(15)
@@ -440,7 +440,7 @@ namespace HamsterWorld.Controllers
 
             //Also load amount of GPU that contains in that store
             query = query.Include(store => store.GPUs!.Where(gpu => gpu.Model.ToLower().Contains(search)))
-                            .ThenInclude(gpu => gpu.Assortments);
+                            .ThenInclude(gpu => gpu.Assortments!.Where(assortment => assortment.StoreId == storeId));
 
             query = query.OrderBy(store => store.Id)
                         .Take(15)
@@ -466,7 +466,7 @@ namespace HamsterWorld.Controllers
 
             //Also load amount of RAM that contains in that store
             query = query.Include(store => store.RAMs!.Where(ram => ram.Model.ToLower().Contains(search)))
-                            .ThenInclude(ram => ram.Assortments);
+                            .ThenInclude(ram => ram.Assortments!.Where(assortment => assortment.StoreId == storeId));
 
             query = query.OrderBy(store => store.Id)
                         .Take(15)
