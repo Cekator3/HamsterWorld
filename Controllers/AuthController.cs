@@ -140,15 +140,11 @@ namespace HamsterWorld.Controllers
 
 		private async Task<bool> IsLoginExist(string login)
 		{
-			User? user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Login == login);
-
-			return user != null;
+			return await _context.Users.AsNoTracking().AnyAsync(u => u.Login == login);
 		}
 		private async Task<bool> IsEmailExist(string email)
 		{
-			User? user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Email == email);
-
-			return user != null;
+			return await _context.Users.AsNoTracking().AnyAsync(u => u.Email == email);
 		}
 
 		private string GeneratePasswordHash(string password)

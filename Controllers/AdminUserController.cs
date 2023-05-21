@@ -23,22 +23,21 @@ public class AdminUserController : Controller
                                                         .Select(e => e.Name)
                                                         .ToListAsync();
 
+        //Remove unecessary white-spaces 
         search = search.Trim();
 
-        //Applying search filter to query
-        IQueryable<UserInfoBindingModel> query = _context.Users.AsNoTracking()
+        //Первые 15 пользователей, соответствующие фильтру поиска
+        List<UserInfoBindingModel> users = await _context.Users.AsNoTracking()
                                                                 .Where(e => e.Login.Contains(search) || e.Email.Contains(search))
                                                                 .Select(e => new UserInfoBindingModel()
                                                                 {
                                                                     Login = e.Login,
                                                                     Email = e.Email,
                                                                     Role = e.Role.Name
-                                                                });
-
-        //Using query to aquire users info from database
-        List<UserInfoBindingModel> users = await query.Take(15)
-                                                        .OrderBy(e => e.Login)
-                                                        .ToListAsync();
+                                                                })
+                                                                .Take(15)
+                                                                .OrderBy(e => e.Login)
+                                                                .ToListAsync();
         
         return View(users);
     }
