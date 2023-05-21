@@ -42,8 +42,12 @@
             </div>
         </div>
     }
-    <div class="row px-0" id="addNew">
-        <a asp-action="ManageProduct" asp-route-category=@ViewBag.Category asp-route-storeId=@ViewBag.StoreId>+</a>
+    <div class="row" id="addNew">
+        <div class="col-12">
+            <div class="border">
+                <a asp-action="ManageProduct" asp-route-category=@ViewBag.Category asp-route-storeId=@ViewBag.StoreId>+</a>
+            </div>
+        </div>
     </div>
 </div>
 
