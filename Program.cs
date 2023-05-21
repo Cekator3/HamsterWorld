@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore; 
 using HamsterWorld.Models;
 using System.Security.Claims;
+using Microsoft.AspNetCore.HttpOverrides;
 
 namespace HamsterWorld
 {
@@ -60,6 +61,11 @@ namespace HamsterWorld
 
       static void Configure(WebApplication app)
       {
+         //Необходим для разворачивания, используя прокси-сервер nginx
+         app.UseForwardedHeaders(new ForwardedHeadersOptions
+         {
+            ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+         });
 
          //Middleware обработки исключений, возникающих в приложении
          if (app.Environment.IsDevelopment())
