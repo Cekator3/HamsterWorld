@@ -15,7 +15,8 @@ namespace HamsterWorld.CaptchaCreator
 			var slc = new SixLaborsCaptchaModule(new SixLaborsCaptchaOptions
 			{
 				DrawLines = 5,
-				TextColor = new Color[] { Color.Blue, Color.Black }
+				TextColor = new Color[] { Color.Blue, Color.Black },
+				FontFamilies = new string[] {"arial", "JetBrainsMono NF"}
 			});
 
 			byte[] result = slc.Generate(Answer);
