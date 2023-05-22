@@ -319,6 +319,10 @@ namespace HamsterWorld.Controllers
             {
                 return BadRequest("Неверный формат данных");
             }
+            if(amount < 0)
+            {
+                return BadRequest("Количество товара не может быть отрицательным");
+            }
 
             Store? store = await _context.Stores.FindAsync(storeId);
             if(store == null)
