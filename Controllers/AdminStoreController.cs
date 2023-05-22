@@ -283,7 +283,7 @@ public class AdminStoreController : Controller
         //Проверяем, если новый адрес магазина соответствует адресам других магазинов
         if(oldStoreInfo.Address != newStoreInfo.Address)
         {
-            if (await _context.Stores.AsNoTracking().AnyAsync(e => e.Address == model.Address))
+            if (await _context.Stores.AsNoTracking().AnyAsync(e => e.Address == newStoreInfo.Address || e.Coordinates == newStoreInfo.Coordinates))
             {
                 return (false, "Другой магазин с таким адресом уже существует");
             }
