@@ -1,8 +1,12 @@
 # HamsterWorld
 
-Для установки нужен Postgresql 15 и Postgis для хранения координатов магазинов в базе данных
+Для установки нужен Postgresql (не слишком старый) и Postgis для хранения координатов магазинов в базе данных
 
 Online store of PC components
+
+Логин: test2
+
+Пароль: 1
 
 TODO:
 
