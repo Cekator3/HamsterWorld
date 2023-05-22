@@ -14,7 +14,7 @@ public class CustomCookieAuthenticationEvents : CookieAuthenticationEvents
 	public override async Task ValidatePrincipal(CookieValidatePrincipalContext context)
 	{
 		//if refresh cookie and Auth Cookie are existing
-		if(context.Request.Cookies.ContainsKey("RefreshCookie") && !context.Request.Cookies.ContainsKey("MyCookie"))
+		if(context.Request.Cookies.ContainsKey("RefreshCookie") && context.Request.Cookies.ContainsKey("MyCookie"))
 		{
 			return;
 		}
