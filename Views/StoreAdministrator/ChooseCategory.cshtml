@@ -5,13 +5,13 @@
 		</div>
 	</div>
 	<div class="row">
-		<div class="col-3">
+		<div class="col-sm-4 text-center col-6">
 			<a asp-action="ManageProducts" asp-route-storeId=@ViewBag.StoreId asp-route-category=@((byte)Product.Categorys.CPU)>Процессоры</a>
 		</div>
-		<div class="col-3">
+		<div class="col-sm-4 text-center col-6">
 			<a asp-action="ManageProducts" asp-route-storeId=@ViewBag.StoreId asp-route-category=@((byte)Product.Categorys.GPU)>Видеокарты</a>
 		</div>
-		<div class="col-3">
+		<div class="col-sm-4 text-center col-6">
 			<a asp-action="ManageProducts" asp-route-storeId=@ViewBag.StoreId asp-route-category=@((byte)Product.Categorys.RAM)>Оперативная память</a>
 		</div>
 	</div>
