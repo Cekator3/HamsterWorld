@@ -12,7 +12,7 @@ namespace HamsterWorld.Models
 		protected ProductAmountBindingModel(Product product)
 		{
 			Id = product.Id;
-			PictureSrc = $"{ProductPicture.PATH}{product.Pictures!.FirstOrDefault(e => e.OrderNumber == 1)?.FileName}";
+			PictureSrc = $"{ProductPicture.PATH}{product.Pictures!.FirstOrDefault()?.FileName}";
 			Model = product.Model;
 			Price = product.Price;
 		}
