@@ -293,6 +293,7 @@ public class AdminStoreController : Controller
         oldStoreInfo.OpeningTime = newStoreInfo.OpeningTime;
         oldStoreInfo.ClosingTime = newStoreInfo.ClosingTime;
         oldStoreInfo.Address = newStoreInfo.Address;
+        oldStoreInfo.Coordinates = newStoreInfo.Coordinates;
         await _context.SaveChangesAsync();
 
         return (true, "");
