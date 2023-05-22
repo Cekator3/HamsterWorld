@@ -4,6 +4,10 @@
 
 Online store of PC components
 
+Логин: test2
+
+Пароль: 1
+
 TODO:
 
 0) Юнит-тесты
