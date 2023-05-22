@@ -373,22 +373,30 @@ namespace HamsterWorld.Controllers
             }
             List<int> picturesIds = picturesOrderInfo.Select(img => img.Id).ToList();
 
-            //Obtaining pictures whose Id is in the request
-            List<ProductPicture> pictures = await _context.ProductsPictures
-                                                            .Where(img => picturesIds.Contains(img.Id))
-                                                            .ToListAsync();
 
-            if(pictures.Count == 0)
+            //Obtaining pictures whose Id is in the request
+            List<ProductPicture> existingPictures = await _context.ProductsPictures
+                                                                .Where(img => picturesIds.Contains(img.Id))
+                                                                .ToListAsync();
+
+            if(existingPictures.Count == 0)
             {
                 return BadRequest("Ни один из предоставленных Id не соответствует ни одной сущности из базы данных");
             }
 
-            foreach(ProductPicture picture in pictures)
+            foreach(ProductPicture picture in existingPictures)
             {
                 picture.OrderNumber = picturesOrderInfo.First(img => img.Id == picture.Id).OrderNumber;
             }
 
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch(DbUpdateConcurrencyException ex)
+            {
+                return Conflict("Некоторые фото были удалены до того, как их порядок был изменён");
+            }
 
             return Ok();
         }

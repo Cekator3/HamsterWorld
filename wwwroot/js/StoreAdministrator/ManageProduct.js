@@ -185,7 +185,7 @@ async function SendRequestToSaveCurrentPicturesOrder()
 {
 	let picturesOrderInfo = [];
 
-	let pictures = $('.picture-galery');
+	let pictures = $('.picture-galery').filter(':not([to-delete])');
 	for (let picture of pictures) 
 	{
 		let id = +picture.getAttribute('pictureId');
