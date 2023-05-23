@@ -495,7 +495,7 @@ namespace HamsterWorld.Controllers
 
         (bool, string) IsUploadedFilesNotBreakingRules(IFormFileCollection files)
         {
-            string[] permittedExtensions = { ".jpg", ".jpeg", ".png"};
+            string[] permittedExtensions = { ".jpg", ".jpeg", ".png", ".webp"};
             foreach(FormFile file in files!)
             {
                 if(file.Length > _fileSizeLimit)
