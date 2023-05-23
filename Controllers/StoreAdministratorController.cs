@@ -107,10 +107,13 @@ namespace HamsterWorld.Controllers
             //Если добавляется новый товар
             if(id == null)
             {
-                model = new ProductDetailsBindingModel();
-                model.Id = -1;
-                model.StoreId = storeId;
-                model.Category = (byte)category;
+                model = new ProductDetailsBindingModel()
+                {
+                    Id = -1,
+                    StoreId = storeId,
+                    Category = (byte)category
+                };
+
                 switch((byte)category)
                 {
                     case (byte)Product.Categorys.CPU:
@@ -130,39 +133,17 @@ namespace HamsterWorld.Controllers
             }
 
             //Если редактируется существующий
-            if((byte)category == (byte)Product.Categorys.CPU)
+            switch ((byte)category)
             {
-                CPU? cpu = await _context.CPUs.AsNoTracking()
-                                            .Include(cpu => cpu.Pictures)
-                                            .FirstOrDefaultAsync(e => e.Id == id);
-
-                if(cpu != null)
-                {
-                    model = new ProductDetailsBindingModel(cpu);
-                }
-
-            }
-            else if((byte)category == (byte)Product.Categorys.GPU)
-            {
-                GPU? gpu = await _context.GPUs.AsNoTracking()
-                                            .Include(gpu => gpu.Pictures)
-                                            .FirstOrDefaultAsync(e => e.Id == id);
-
-                if(gpu != null)
-                {
-                    model = new ProductDetailsBindingModel(gpu);
-                }
-            }
-            else if((byte)category == (byte)Product.Categorys.RAM)
-            {
-                RAM? ram = await _context.RAMs.AsNoTracking()
-                                            .Include(ram => ram.Pictures)
-                                            .FirstOrDefaultAsync(e => e.Id == id);
-
-                if(ram != null)
-                {
-                    model = new ProductDetailsBindingModel(ram);
-                }
+                case (byte)Product.Categorys.CPU:
+                    model = await LoadProductDetailsIntoBindingModel(_context.CPUs, (int)id)!;
+                    break;
+                case (byte)Product.Categorys.GPU:
+                    model = await LoadProductDetailsIntoBindingModel(_context.GPUs, (int)id)!;
+                    break;
+                case (byte)Product.Categorys.RAM:
+                    model = await LoadProductDetailsIntoBindingModel(_context.RAMs, (int)id)!;
+                    break;
             }
 
             if(model == null)
@@ -522,7 +503,7 @@ namespace HamsterWorld.Controllers
             bool isAdmin = await _context.Entry(store)
                                             .Collection(e => e.Administrators!)
                                             .Query()
-                                            .AnyAsync(e => e.Id == userId);
+                                            .AnyAsync(user => user.Id == userId);
 
             return isAdmin;
         }
@@ -531,6 +512,33 @@ namespace HamsterWorld.Controllers
         {
             string userId = User.FindFirst(e => e.Type == ClaimTypes.NameIdentifier)!.Value;
             return int.Parse(userId);
+        }
+
+        public async Task<ProductDetailsBindingModel>? LoadProductDetailsIntoBindingModel<T>(DbSet<T> entities, int productId) where T: Product
+        {
+            T? product = await entities.AsNoTracking()
+                                    .Include(cpu => cpu.Pictures)
+                                    .FirstOrDefaultAsync(e => e.Id == productId);
+
+            if(product == null)
+            {
+                return null!;
+            }
+
+            if(product is CPU cpu)
+            {
+                return new ProductDetailsBindingModel(cpu);
+            }
+            if(product is GPU gpu)
+            {
+                return new ProductDetailsBindingModel(gpu);
+            }
+            if(product is RAM ram)
+            {
+                return new ProductDetailsBindingModel(ram);
+            }
+
+            return null!;
         }
 
         async Task<bool> IsCountryExist(string code)
