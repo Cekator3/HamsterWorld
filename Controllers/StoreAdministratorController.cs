@@ -66,25 +66,25 @@ namespace HamsterWorld.Controllers
                 return Unauthorized();
             }
 
+
             //preparing viewModel (loading all CPUs/GPUs/... of store and their amount at this store)
             List<ProductAmountBindingModel> viewModel = null!;
-            Store fullStoreInfo = null!;
 
             switch(category)
             {
                 case (byte)Product.Categorys.CPU:
-                    fullStoreInfo = await GetStoreWithLoadedCPUsDetails(searchFilter, storeId);
-                    viewModel = ConvertStoreToCPUBindingModelList(fullStoreInfo).Cast<ProductAmountBindingModel>().ToList();
+                    await LoadCPUsDetailsToStoreEntity(searchFilter, store);
+                    viewModel = ConvertStoreToCPUBindingModelList(store);
                     break;
 
                 case (byte)Product.Categorys.GPU:
-                    fullStoreInfo = await GetStoreWithLoadedGPUsDetails(searchFilter, storeId);
-                    viewModel = ConvertStoreToGPUBindingModelList(fullStoreInfo).Cast<ProductAmountBindingModel>().ToList();
+                    await LoadGPUsDetailsToStoreEntity(searchFilter, store);
+                    viewModel = ConvertStoreToGPUBindingModelList(store);
                     break;
 
                 case (byte)Product.Categorys.RAM:
-                    fullStoreInfo = await GetStoreWithLoadedRAMsDetails(searchFilter, storeId);
-                    viewModel = ConvertStoreToRAMBindingModelList(fullStoreInfo).Cast<ProductAmountBindingModel>().ToList();
+                    await LoadRAMsDetailsToStoreEntity(searchFilter, store);
+                    viewModel = ConvertStoreToRAMBindingModelList(store);
                     break;
                 default:
                     return NotFound("Такой категории не существует");
@@ -413,83 +413,64 @@ namespace HamsterWorld.Controllers
 
 
 
-        async Task<Store> GetStoreWithLoadedCPUsDetails(string searchFilter, short storeId)
+        async Task LoadCPUsDetailsToStoreEntity(string searchFilter, Store store)
         {
-            string search = searchFilter.ToLower();
-            IQueryable<Store> query = _context.Stores.AsNoTracking();
+            //Чтобы подгрузить товары, ef core автоматически подгружает промежуточную таблицу assortments,
+            //Поэтому её подгружать отдельно нет смысла
+            await _context.Entry(store)
+                        .Collection(s => s.CPUs!)
+                        .Query()
+                        .Where(cpu => cpu.Model.ToLower().Contains(searchFilter))
+                        .LoadAsync();
 
-            //Include CPUs that match the search filter
-            query = query.Include(store => store.CPUs!.Where(cpu => cpu.Model.ToLower().Contains(search)));
-
-            //Also load first picture of each CPU
-            query = query.Include(store => store.CPUs!.Where(cpu => cpu.Model.ToLower().Contains(search)))
-                            .ThenInclude(store => store.Pictures!.OrderBy(pic => pic.OrderNumber).Take(1));
-
-            //Also load amount of CPU that contains in that store
-            query = query.Include(store => store.CPUs!.Where(cpu => cpu.Model.ToLower().Contains(search)))
-                            .ThenInclude(cpu => cpu.Assortments!.Where(assortment => assortment.StoreId == storeId));
-
-            query = query.OrderBy(store => store.Id)
-                        .Take(15)
-                        .AsSplitQuery();
-
-            Store store = (await query.FirstOrDefaultAsync(store => store.Id == storeId))!;
-
-            return store;
+            foreach (CPU cpu in store.CPUs!)
+            {
+                await _context.Entry(cpu)
+                                .Collection(e => e.Pictures!)
+                                .Query()
+                                .OrderBy(pic => pic.OrderNumber)
+                                .Take(1)
+                                .LoadAsync();
+            }
         }
-        async Task<Store> GetStoreWithLoadedGPUsDetails(string searchFilter, short storeId)
+        async Task LoadGPUsDetailsToStoreEntity(string searchFilter, Store store)
         {
-            //Почти полное повторение GetStoreWithLoadedCPUDetails
-            string search = searchFilter.ToLower();
-            IQueryable<Store> query = _context.Stores.AsNoTracking();
+            await _context.Entry(store)
+                        .Collection(s => s.GPUs!)
+                        .Query()
+                        .Where(gpu => gpu.Model.ToLower().Contains(searchFilter))
+                        .LoadAsync();
 
-            //Include GPUs that match the search filter
-            query = query.Include(store => store.GPUs!.Where(gpu => gpu.Model.ToLower().Contains(search)));
-
-            //Also load first picture of each GPU
-            query = query.Include(store => store.GPUs!.Where(gpu => gpu.Model.ToLower().Contains(search)))
-                            .ThenInclude(store => store.Pictures!.OrderBy(pic => pic.OrderNumber).Take(1));
-
-            //Also load amount of GPU that contains in that store
-            query = query.Include(store => store.GPUs!.Where(gpu => gpu.Model.ToLower().Contains(search)))
-                            .ThenInclude(gpu => gpu.Assortments!.Where(assortment => assortment.StoreId == storeId));
-
-            query = query.OrderBy(store => store.Id)
-                        .Take(15)
-                        .AsSplitQuery();
-
-            Store store = (await query.FirstOrDefaultAsync(store => store.Id == storeId))!;
-
-            return store;
+            foreach (GPU gpu in store.GPUs!)
+            {
+                await _context.Entry(gpu)
+                                .Collection(e => e.Pictures!)
+                                .Query()
+                                .OrderBy(pic => pic.OrderNumber)
+                                .Take(1)
+                                .LoadAsync();
+            }
         }
-
-        async Task<Store> GetStoreWithLoadedRAMsDetails(string searchFilter, short storeId)
+        async Task LoadRAMsDetailsToStoreEntity(string searchFilter, Store store)
         {
-            //Почти полное повторение GetStoreWithLoadedCPUDetails
-            string search = searchFilter.ToLower();
-            IQueryable<Store> query = _context.Stores.AsNoTracking();
+            await _context.Entry(store)
+                        .Collection(s => s.RAMs!)
+                        .Query()
+                        .Where(ram => ram.Model.ToLower().Contains(searchFilter))
+                        .LoadAsync();
 
-            //Include RAMs that match the search filter
-            query = query.Include(store => store.RAMs!.Where(ram => ram.Model.ToLower().Contains(search)));
-
-            //Also load first picture of each RAM
-            query = query.Include(store => store.RAMs!.Where(ram => ram.Model.ToLower().Contains(search)))
-                            .ThenInclude(store => store.Pictures!.OrderBy(pic => pic.OrderNumber).Take(1));
-
-            //Also load amount of RAM that contains in that store
-            query = query.Include(store => store.RAMs!.Where(ram => ram.Model.ToLower().Contains(search)))
-                            .ThenInclude(ram => ram.Assortments!.Where(assortment => assortment.StoreId == storeId));
-
-            query = query.OrderBy(store => store.Id)
-                        .Take(15)
-                        .AsSplitQuery();
-
-            Store store = (await query.FirstOrDefaultAsync(store => store.Id == storeId))!;
-
-            return store;
+            foreach (RAM ram in store.RAMs!)
+            {
+                await _context.Entry(ram)
+                                .Collection(e => e.Pictures!)
+                                .Query()
+                                .OrderBy(pic => pic.OrderNumber)
+                                .Take(1)
+                                .LoadAsync();
+            }
         }
 
-        public List<CPUAmountBindingModel> ConvertStoreToCPUBindingModelList(Store store)
+        public List<ProductAmountBindingModel> ConvertStoreToCPUBindingModelList(Store store)
         {
             List<CPUAmountBindingModel> models = new List<CPUAmountBindingModel>();
 
@@ -500,10 +481,10 @@ namespace HamsterWorld.Controllers
                 models.Add(model);
             }
 
-            return models;
+            return models.Cast<ProductAmountBindingModel>().ToList();
         }
 
-        public List<GPUAmountBindingModel> ConvertStoreToGPUBindingModelList(Store store)
+        public List<ProductAmountBindingModel> ConvertStoreToGPUBindingModelList(Store store)
         {
             //Почти полное повторение ConvertStoreToCPUBindingModelList
             List<GPUAmountBindingModel> models = new List<GPUAmountBindingModel>();
@@ -515,10 +496,10 @@ namespace HamsterWorld.Controllers
                 models.Add(model);
             }
 
-            return models;
+            return models.Cast<ProductAmountBindingModel>().ToList();
         }
 
-        public List<RAMAmountBindingModel> ConvertStoreToRAMBindingModelList(Store store)
+        public List<ProductAmountBindingModel> ConvertStoreToRAMBindingModelList(Store store)
         {
             //Почти полное повторение ConvertStoreToCPUBindingModelList
             List<RAMAmountBindingModel> models = new List<RAMAmountBindingModel>();
@@ -530,7 +511,7 @@ namespace HamsterWorld.Controllers
                 models.Add(model);
             }
 
-            return models;
+            return models.Cast<ProductAmountBindingModel>().ToList();
         }
 
         async Task<bool> IsUserAdminOfStore(Store store)
@@ -538,13 +519,12 @@ namespace HamsterWorld.Controllers
             int userId = GetCurrentUserIdFromAuthCookie();
 
             //Loads to context current user's info if he is admin of this store
-            await _context.Entry(store)
-                            .Collection(e => e.Administrators!)
-                            .Query()
-                            .AsSplitQuery()
-                            .FirstOrDefaultAsync(e => e.Id == userId);
+            bool isAdmin = await _context.Entry(store)
+                                            .Collection(e => e.Administrators!)
+                                            .Query()
+                                            .AnyAsync(e => e.Id == userId);
 
-            return store.Administrators!.Count == 1;
+            return isAdmin;
         }
 
         int GetCurrentUserIdFromAuthCookie()
