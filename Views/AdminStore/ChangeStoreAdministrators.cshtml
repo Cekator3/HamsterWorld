@@ -1,5 +1,6 @@
 ﻿@model List<ChangeStoreAdministratorsBindingModel>
 @{
+    ViewBag.Title = "Администраторы магазина";
     var AdminsOfThisStore = Model.Where(e => e.IsAdminOfThisStore).ToList();
     var NotAdminsOfThisStore = Model.Where(e => !e.IsAdminOfThisStore).ToList();
 }
