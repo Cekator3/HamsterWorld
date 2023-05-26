@@ -1,0 +1,197 @@
+html {
+  font-size: 14px;
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+@media (min-width: 768px){
+  html {
+    font-size: 16px;
+  }
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+main{
+  min-height: calc(100vh - 120px);
+}
+
+a.navbar-brand {
+  white-space: normal;
+  text-align: center;
+  word-break: break-all;
+}
+
+a {
+  color: #0077cc;
+}
+
+.btn-primary {
+  color: #fff;
+  background-color: #1b6ec2;
+  border-color: #1861ac;
+}
+
+.nav-pills .nav-link.active, .nav-pills .show > .nav-link {
+  color: #fff;
+  background-color: #1b6ec2;
+  border-color: #1861ac;
+}
+
+.border-top {
+  border-top: 1px solid #e5e5e5;
+}
+
+.border-bottom {
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.box-shadow {
+  box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .05);
+}
+
+button.accept-policy {
+  font-size: 1rem;
+  line-height: inherit;
+}
+
+@media screen and (max-width: 1200px) {
+  footer .logo figcaption {
+    font-size: 0.875rem;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  footer .logo {
+    text-align: right;
+  }
+
+  footer .logo figcaption{
+    max-width: 70%;
+    margin-left: auto;
+  }
+
+  footer .soc {
+    margin-top: 18px;
+  }
+
+  footer .soc nav {
+    margin-top: 22px;
+  }
+
+  footer .copyrights{
+    margin-top: 30px;
+  }
+
+  footer .soc p {
+    text-align: center;
+  }
+}
+
+@media screen and (max-width: 576px) 
+{
+  footer .logo {
+    text-align: center;
+  }
+
+  footer .logo figcaption {
+    max-width: none;
+    margin-top: 18px;
+  };
+
+  footer .menu {
+    width: 260px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+footer{
+  background-color: #4B4B4E;
+  word-wrap: normal;
+  padding: 30px 0 20px;
+}
+
+footer .logo a {
+  scroll-behavior: smooth;
+}
+
+footer .logo figcaption {
+  font-size: 1.063rem;
+  line-height: 25px;
+  color: white;
+  margin-top: 40px;
+}
+
+footer .menu-footer a {
+  color: white;
+  font-size: 0.9rem;
+  margin-bottom: 18px;
+  text-decoration: none;
+  transition: 0.5 all ease;
+}
+
+footer form button,
+footer form input{
+  background-color: transparent;
+  border: none;
+  outline: none;
+}
+
+footer form input,
+footer form input::placeholder{
+  font-size: 0.875rem;
+  line-height: 19px;
+  color: white;
+  width: 100%;
+}
+
+footer form > div {
+  padding-bottom: 8px;
+  border-bottom: 2px solid white;
+}
+
+footer button img{
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+footer .menu-footer a:hover{
+  color: orange;
+}
+
+footer .soc{
+  margin-top: 46px;
+}
+
+footer .soc p{
+  font-size: 0.875rem;
+  line-height: 19px;
+  color: white;
+}
+
+footer .soc nav {
+  margin-top: 30px;
+  gap: 65px;
+}
+
+footer .soc nav img{
+  width: 34px;
+  height: 34px;
+}
+
+footer .copyrights{
+  font-size: 0.75rem;
+  line-height: 16px;
+  color: white;
+  margin-top: 49px;
+}
+
+footer .container > .row {
+  gap: 24px;
+}

@@ -52,7 +52,7 @@ namespace HamsterWorld.Controllers
         [HttpGet]
         public async Task<IActionResult> ManageProducts(short storeId, byte category, string searchFilter = "")
         {
-            searchFilter = searchFilter.Trim(' ');
+            searchFilter = searchFilter.Trim(' ').ToLower();
 
             //First query to database to check if store exist and User have all needed rights
             Store? store = await _context.Stores.FindAsync(storeId);

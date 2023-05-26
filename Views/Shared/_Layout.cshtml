@@ -7,65 +7,66 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"]</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/layout.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/Home/Index.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/StoreAdministrator/ManageProducts.css" asp-append-version="true" />
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
     <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-light border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Хомячьий мир</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class='nav-item'>
-                            <a class='nav-link text-dark' asp-area='' asp-controller='Home' asp-action='Index'>Каталог</a>
-                        </li>
-                        @{byte? userRole = GetUserRole();}
-                        @if(userRole == null)
-                        {
-                            <li class='nav-item'>
-                                <a class='nav-link text-dark' asp-area='' asp-controller='Auth' asp-action='Login'>Войти</a>
-                            </li>
-                            <li class='nav-item'>
-                                <a class='nav-link text-dark' asp-area='' asp-controller='Auth' asp-action='SignUp'>Зарегистрироваться</a>
-                            </li>
-                        }
-                        else
-                        {
-                            @if (userRole >= Role.STORE_ADMIN)
-                            {
-                                <li class='nav-item'>
-                                    <a class='nav-link text-dark' asp-area='' asp-controller='StoreAdministrator' asp-action='ChooseStore'>Список товаров магазина</a>
-                                </li>
-                            }
-                            @if (userRole == Role.ADMIN)
-                            {
+    <header class="p-3 mb-3 border-bottom" id="header">
+    <div class="container">
+    <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
+        @* Logo *@
+        <a class="d-flex align-items-center mb-2 mb-lg-0 text-dark text-decoration-none" asp-controller="Home" asp-action="Index">
+            <img src="~/Images/Main/logo.svg" alt="" width="40" height="32" class="bi me-2">
+        </a>
 
-                                <li class='nav-item'>
-                                    <a class='nav-link text-dark' asp-area='' asp-controller='AdminStore' asp-action='ManageStores'>Филиалы</a>
-                                </li>
-                                <li class='nav-item'>
-                                    <a class='nav-link text-dark' asp-area='' asp-controller='AdminUser' asp-action='ManageUsers'>Пользователи</a>
-                                </li>
-                            }
-                            @if (userRole >= Role.BANNED)
-                            {
-                                <li class='nav-item'>
-                                    <a class='nav-link text-dark' asp-area='' asp-controller='Auth' asp-action='Logout'>Выйти</a>
-                                </li>
-                            }
-                        }
-                    </ul>
-                </div>
+        <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
+            <li><a class="nav-link px-2 link-secondary" asp-controller='Home' asp-action='Index'>Главная</a></li>
+            @{byte? userRole = GetUserRole();}
+            @if (userRole >= Role.STORE_ADMIN)
+            {
+                <li><a class="nav-link px-2 link-secondary" asp-controller='StoreAdministrator' asp-action='ChooseStore'>Список товаров магазина</a></li>
+            }
+            @if (userRole == Role.ADMIN)
+            {
+
+                <li><a class='nav-link px-2 link-secondary' asp-controller='AdminStore' asp-action='ManageStores'>Филиалы</a></li>
+                <li><a class='nav-link px-2 link-secondary' asp-controller='AdminUser' asp-action='ManageUsers'>Пользователи</a></li>
+            }
+        </ul>
+
+        <form class="col-12 col-lg-auto mb-3 mb-lg-0 me-lg-3">
+            <input type="search" class="form-control" placeholder="Поиск по каталогу" aria-label="Search">
+        </form>
+
+        @if(userRole == null)
+        {
+            <div class="text-end">
+            <a class='btn btn-outline-primary me-2' asp-controller='Auth' asp-action='Login'>Войти</a>
+            <a class='btn btn-primary' asp-controller='Auth' asp-action='SignUp'>Зарегистрироваться</a>
             </div>
-        </nav>
+        }
+        else
+        {
+            <div class="dropdown text-end">
+                <a href="#" class="d-block link-dark text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+                    <img src="~/Images/Main/user.svg" alt="mdo" width="32" height="32" class="rounded-circle">
+                </a>
+                <ul class="dropdown-menu text-small" aria-labelledby="dropdownUser1" style="">
+                    <li><a class="dropdown-item" href="#">Корзина(coming soon)</a></li>
+                    <li><a class="dropdown-item" href="#">Мои комментарии(coming soon)</a></li>
+                    <li><a class="dropdown-item" href="#">Профиль(coming soon)</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" asp-controller='Auth' asp-action='Logout'>Выйти</a></li>
+                </ul>
+            </div>
+        }
+    </div>
+    </div>
     </header>
     <div class="container">
         <main role="main" class="pb-3">
@@ -73,9 +74,41 @@
         </main>
     </div>
 
-    <footer class="border-top footer text-muted bg-light">
+    <footer class="container-fluid">
         <div class="container">
-            <p class="text-dark">&copy; 2023 - Я не знаю свои права</p>
+        <div class="row justify-content-center justify-content-lg-between">
+            <figure class="logo col-md-3 col-sm-5 col-lg-2">
+                <a href="#header">
+                    <img src="~/Images/Main/logo.svg" alt="Хомячий мир" style="height: 5rem; width: 5rem;">
+                </a>
+                <figcaption>Интернет магазин компьютерной техники</figcaption>
+            </figure>
+            <nav class="menu-footer col-md-3 col-sm-5">
+                <a href="#" class="d-block">Каталог</a>
+                <a href="#" class="d-block">О нас</a>
+                <a href="#" class="d-block">Политика конфиденциальности</a>
+            </nav>
+            <div class="col-sm-8 col-md-5">
+            @* Поиск *@
+            <form>
+            <div class="d-flex justify-content-center align-items-center">
+                <input type="text" placeholder="Поиск по каталогу">
+                <button type="submit" class="d-flex justify-content-center align-items-center">
+                    <img src="~/Images/Main/search.svg" alt="Поиск">
+                </button>
+            </div>
+            </form>
+            </div>
+            <div class="soc">
+                <p>Следи за нами в соц. сетях</p>
+                <nav class="d-flex justify-content-center align-items-center">
+                    <a href="https://github.com/Cekator3/HamsterWorld"><img src="~/Images/Main/github-mark.svg" alt="Github"></a>
+                    <a href="https://vk.com/maedae1"><img src="~/Images/Main/vk-logo.svg" alt="Вконтакте"></a>
+                </nav>
+            </div>
+            </div>
+        </div>
+        <p class="copyrights text-center">Все права защищены &copy; 2023</p>
         </div>
     </footer>
 </body>

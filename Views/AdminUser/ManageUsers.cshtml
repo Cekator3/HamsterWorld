@@ -11,15 +11,15 @@
     </div>
     <div class="row mb-4">
         <form asp-controller="AdminUser" asp-action="ManageUsers" method="get" class="input-group mx-0 px-0">
-            <div class="col-sm-4 col-9">
-                <input name="Search" type="search" class="form-control" placeholder="Поиск">
+            <div class="col-sm-4 col-12">
+                <input name="Search" type="search" class="form-control" placeholder="Пользователь">
             </div>
-            <div class="col-3">
-                <button type="submit" class="btn btn-primary">Поиск</button>
+            <div class="col-sm-3 col-12">
+                <button type="submit" class="btn btn-primary">Искать</button>
             </div>
         </form>
     </div>
-    <div class="row">
+    <div class="row overflow-auto">
         <table id="Users" class="table">
             <thead>
                 <tr>
@@ -39,7 +39,7 @@
                         <th scope="row">@(i + 1)</th>
                         <th scope="row">@Model[i].Login</th>
                         <th scope="row">@Model[i].Email</th>
-                        <th scope="row">@Html.DropDownList("newRoleName", roles, null, new {@class="newRoleName", @login=$"{Model[i].Login}"})</th>
+                        <th scope="row">@Html.DropDownList("newRoleName", roles, null, new {@class="newRoleName form-select-sm", @login=$"{Model[i].Login}"})</th>
                     </tr>
                 }
             </tbody>
