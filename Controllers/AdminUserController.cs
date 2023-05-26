@@ -24,11 +24,11 @@ public class AdminUserController : Controller
                                                         .ToListAsync();
 
         //Remove unecessary white-spaces 
-        search = search.Trim();
+        search = search.Trim().ToLower();
 
         //Первые 15 пользователей, соответствующие фильтру поиска
         List<UserInfoBindingModel> users = await _context.Users.AsNoTracking()
-                                                                .Where(e => e.Login.Contains(search) || e.Email.Contains(search))
+                                                                .Where(e => e.Login.ToLower().Contains(search) || e.Email.ToLower().Contains(search))
                                                                 .Select(e => new UserInfoBindingModel()
                                                                 {
                                                                     Login = e.Login,
