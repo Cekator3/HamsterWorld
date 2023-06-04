@@ -1,0 +1,34 @@
+﻿@model CatalogBindingModel
+@{
+    ViewData["Title"] = "Товары";
+}
+@section Stylesheets {
+    <link rel="stylesheet" href="~/css/Home/Catalog.css" asp-append-version="true" />
+}
+
+<div class="container">
+    @Html.EditorFor(m => m.Filter)
+
+    @foreach (CatalogItem product in Model.CatalogItems)
+    {
+        <div class="row mb-4" storeId="@ViewBag.StoreId" productId="@product.Id">
+            <div class="col-12 col-sm-3" style="max-width: 300px;">
+                <img class="img-thumbnail" src="@product.PictureSrc" alt="Картинка">
+            </div>
+            <div class="col-12 col-sm-6">
+                <div class="product-info">
+                    <p>
+                        <mark>
+                            <a asp-action="ManageProduct" style="text-decoration: none;" asp-route-category=@ViewBag.Category asp-route-storeId=@ViewBag.StoreId asp-route-id=@product.Id>@product.ToString()</a>
+                        </mark>
+                    </p>
+                </div>
+            </div>
+            <div class="col-12 col-sm-3">
+                <div class="product-price">
+                    <p>@product.Price руб.</p>
+                </div>
+            </div>
+        </div>
+    }
+</div>

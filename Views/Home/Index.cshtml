@@ -1,40 +1,91 @@
-﻿@{
-    ViewData["Title"] = "Каталог";
+﻿@model HamsterWorldInfoBindingModel
+@{
+    ViewData["Title"] = "Главная";
+}
+@section Stylesheets {
+    <link rel="stylesheet" href="~/css/Home/Index.css" asp-append-version="true" />
 }
 
-<div class="container-fluid">
-<div class="container">
-    <section class="categories row">
-        <div class="categories-menu col-3">
-            <h3 class="d-flex align-items-center">КАТЕГОРИИ</h3>
-            <nav class="menu">
-                <ul>
-                    <li>
-                        <a href="#">Компьютерные комплектующие</a>
-                        <ul class="sub-categories">
-                            <li>
-                                <a href="#">Процессоры</a>
-                            </li>
-                            <li>
-                                <a href="#">Видеокарты</a>
-                            </li>
-                            <li>
-                                <a href="#">Оперативная память</a>
-                            </li>
-                        </ul>
-                    </li>
-                    <li>
-                        <a href="#">Компьютерные комплектующие</a>
-                    </li>
-                    <li>
-                        <a href="#">Компьютерные комплектующие</a>
-                    </li>
-                </ul>
-            </nav>
-        </div>
-        <div class="items col-9">
+<div class="container px-0">
+    <div class="row">
+    <div class="col">
+            <h1 class="font-weight-bold">Хомячьий мир - сеть магазинов компьютерной техники</h1>
+    </div>
+    </div>
 
+    <div class="row">
+        <div class="col-12">
+            <h2 class="font-weight-bold">У нас можно купить компьютерные комплектующие по выгодной цене</h2>
         </div>
-    </section>
-</div>
+        <div class="col-12">
+            <p>Наша цель изменить жизнь людей, сделав простым доступ к огромному количеству качественных и недорогих товаров, предоставляя лучший сервис.</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="text-primary mb-3">
+                <h2>Для клиентов</h2>
+            </div>
+            <div>
+                <p>Наши клиенты – в центре всего, что мы делаем,</p>
+                <p>Доверие - главное. Мы строим долгосрочные отношения,</p>
+                <p>Во всём, чем занимаемся, стремимся быть экспертами,</p>
+                <p>Открыты для предложений и улучшений.</p>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="text-primary">
+                <h2>Для партнёров</h2>
+            </div>
+            <div>
+                <p>Прозрачность - основа совместного бизнеса,</p>
+                <p>Работаем, соблюдая этику бизнеса,</p>
+                <p>Уважаем другие мнения и интересы,</p>
+                <p>Выполняем обязательства и берем ответственность за свои решения,</p>
+                <p>Нетерпимы к коррупции.</p>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="text-primary">
+                <h2>Для сотрудников</h2>
+            </div>
+            <div>
+                <p>Мы - одна команда,</p>
+                <p>Уважаем мнение и интересы людей,</p>
+                <p>Ценим свободу, смелость и ответственность.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12 text-muted">
+            <h2 class="font-weight-bold">Хомячьий мир сегодня</h2>
+        </div>
+
+        <div class="col-12 info d-flex justify-content-around mx-2">
+            <div class="info-item">
+                <div class="text-center info-items__num">@Model.StoresAmount</div>
+                <div class="text-center info-items__subtitle-info">Количество магазинов</div>
+            </div>
+            <div class="info-item">
+                <div class="text-center info-items__num">@Model.EmployeesAmount</div>
+                <div class="text-center info-items__subtitle-info">Сотрудников в штате</div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="row">
+        <div class="col-12">
+            <h2 class="text-primary">Основные категории</h2>
+            <ul class="category-list">
+                <li><a asp-controller="Home" asp-action="Catalog" asp-route-filterType="@Product.Categorys.CPU" class="category-item">Процессоры</a></li>
+                <li><a asp-controller="Home" asp-action="Catalog" asp-route-filterType="@Product.Categorys.GPU" class="category-item">Видеокарты</a></li>
+                <li><a asp-controller="Home" asp-action="Catalog" asp-route-filterType="@Product.Categorys.RAM" class="category-item">Оперативная память</a></li>
+            </ul>
+        </div>
+    </div>
 </div>

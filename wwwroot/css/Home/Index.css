@@ -1,61 +1,46 @@
-.categories{
-   margin-top: 21px;
-}
-
-.categories .categories-menu h3 {
-   height: 50px;
-   background: orange;
-   margin-bottom: 0;
-   border-radius: 5px 5px 0px 0px;
-
-   font-size: 1.125rem;
-   line-height: 25px;
-   color: white;
-   padding-left: 28px;
-   padding-right: 15px;
-}
-
-.categories .categories-menu .menu {
-   border-left: 1px solid grey;
-   border-right: 1px solid grey;
-   border-bottom: 1px solid grey;
-   border-radius: 0px 0px 5px 5px;
-   padding-top: 14px;
-   padding-bottom: 10px;
-}
-
-.categories .categories-menu .menu ul{
-   padding: 0;
-   margin: 0;
+ul
+{
    list-style: none;
 }
 
-.categories .categories-menu .menu ul li{
-   padding-left: 28px;
-   padding-right: 15px;
-   padding: 8px 0;
-}
-
-.categories .categories-menu .menu ul li:hover{
-   font-weight: 600;
-}
-
-.categories .categories-menu .menu ul li a{
-   font-size: 0.875em;
-   line-height: 19px;
-   color: darkslategrey;
+a
+{
    text-decoration: none;
 }
 
-.categories .categories-menu .sub-categories{
-   padding-top: 9px;
+.row
+{
+   margin-bottom: 1em;
 }
 
-.categories .categories-menu .sub-categories li {
+.info
+{
+   background: linear-gradient(0deg,#fc8507,#ffa218);
+   box-shadow: 0 14px 44px rgba(252,154,7,.28);
+   border-radius: 16px;
+   padding: 32px 0;
+}
+
+.info .info-items__num
+{
+   color: #fff;
+   font-weight: 700;
+   font-size: 1.5em;
+}
+
+.info .info-items__subtitle-info
+{
+   color: #fff;
    font-weight: 400;
+   font-size: 1em;
 }
 
-.categories .categories-menu .sub-categories li:hover a{
-   color: orange;
-   font-weight: bold;
+.category-list .category-item
+{
+   color: rgb(63, 63, 63);
+}
+
+.category-list .category-item:hover
+{
+   color: rgb(185, 121, 0);
 }
