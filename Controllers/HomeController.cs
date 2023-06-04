@@ -80,13 +80,17 @@ public class HomeController : Controller
     {
         IQueryable<T> query = productDbSet.AsNoTracking();
 
-        ApplyBaseFilters(query, filter);
-        ApplySpecificFilters(query, filter);
+        ApplyBaseFilters(ref query, filter);
+        ApplySpecificFilters(ref query, filter);
 
         //loading preview image
         query = query.Include(product => product.Pictures!.OrderBy(pic => pic.OrderNumber).Take(1));
 
-        return await query.Take(15).ToListAsync();
+        byte amountOfProductsToBeLoaded = 15;
+        query = query.OrderBy(product => product.Id)
+                    .Take(amountOfProductsToBeLoaded);
+
+        return await query.ToListAsync();
     }
 
     List<CatalogItem> ConvertProductsToCatalogItems(List<CPU> products)
@@ -102,77 +106,111 @@ public class HomeController : Controller
         return products.Select(ram => new CatalogRamItem(ram)).ToList<CatalogItem>();
     }
 
-    void ApplyBaseFilters(IQueryable<Product> query, CatalogFilter filter)
+    void ApplyBaseFilters<T>(ref IQueryable<T> query, CatalogFilter filter) where T:Product
     {
+        if(filter.MinPrice != null)
+        {
+            query = query.Where(product => product.Price >= filter.MinPrice);
+        }
+
         if(filter.MaxPrice != null)
         {
-            query = query.Where(product => product.Price >= filter.MinPrice && product.Price <= filter.MaxPrice);
+            query = query.Where(product => product.Price <= filter.MaxPrice);
         }
 
-        if(filter.Model != null)
+        if(!String.IsNullOrWhiteSpace(filter.Model))
         {
-            query = query.Where(product => product.Model == filter.Model);
+            string model = filter.Model.ToLower();
+            query = query.Where(product => product.Model.ToLower().Contains(model));
         }
     }
 
-    void ApplySpecificFilters(IQueryable<Product> query, CatalogFilter filter)
+    void ApplySpecificFilters<T>(ref IQueryable<T> query, CatalogFilter filter) where T:Product
     {
-        if(query is IQueryable<CPU>)
+        if(query is IQueryable<CPU> cpuQuery)
         {
-            ApplyCpuFilters((query as IQueryable<CPU>)!, (filter as CatalogCpuFilter)!);
+            ApplyCpuFilters(ref cpuQuery, (filter as CatalogCpuFilter)!);
+
+            query = (IQueryable<T>)cpuQuery;
         }
-        else if(query is IQueryable<GPU>)
+        else if(query is IQueryable<GPU> gpuQuery)
         {
-            ApplyGpuFilters((query as IQueryable<GPU>)!, (filter as CatalogGpuFilter)!);
+            ApplyGpuFilters(ref gpuQuery, (filter as CatalogGpuFilter)!);
+
+            query = (IQueryable<T>)gpuQuery;
         }
-        else if(query is IQueryable<RAM>)
+        else if(query is IQueryable<RAM> ramQuery)
         {
-            ApplyRamFilters((query as IQueryable<RAM>)!, (filter as CatalogRamFilter)!);
+            ApplyRamFilters(ref ramQuery, (filter as CatalogRamFilter)!);
+
+            query = (IQueryable<T>)ramQuery;
         }
     }
 
-    void ApplyCpuFilters(IQueryable<CPU> query, CatalogCpuFilter filter)
+    void ApplyCpuFilters(ref IQueryable<CPU> query, CatalogCpuFilter filter)
     {
+        if(filter.ClockRateMin != null)
+        {
+            query = query.Where(product => product.ClockRate >= filter.ClockRateMin);
+        }
+
         if(filter.ClockRateMax != null)
         {
-            query = query.Where(product => product.ClockRate >= filter.ClockRateMin && product.ClockRate <= filter.ClockRateMax);
+            query = query.Where(product => product.ClockRate <= filter.ClockRateMax);
         }
 
-        if(filter.AllowedNumbersOfCores.Count != 0)
+        if(filter.NumberOfCoresMin != null)
         {
-            query = query.Where(product => filter.AllowedNumbersOfCores.Contains(product.NumberOfCores));
+            query = query.Where(product => product.NumberOfCores >= filter.NumberOfCoresMin);
         }
 
-        if(filter.AllowedSockets.Count != 0)
+        if(filter.NumberOfCoresMax != null)
         {
-            query = query.Where(product => filter.AllowedSockets.Contains(product.Socket));
+            query = query.Where(product => product.NumberOfCores <= filter.NumberOfCoresMax);
+        }
+
+        if(!String.IsNullOrWhiteSpace(filter.Socket))
+        {
+            string socket = filter.Socket.ToLower();
+            query = query.Where(product => product.Socket.ToLower().Contains(socket));
         }
     }
 
-    void ApplyGpuFilters(IQueryable<GPU> query, CatalogGpuFilter filter)
+    void ApplyGpuFilters(ref IQueryable<GPU> query, CatalogGpuFilter filter)
     {
-        if(filter.MemoryType != null)
+        if(!String.IsNullOrWhiteSpace(filter.MemoryType))
         {
-            query = query.Where(product => product.MemoryType.Contains(filter.MemoryType));
+            string MemoryType = filter.MemoryType.ToLower();
+            query = query.Where(product => product.MemoryType.ToLower().Contains(MemoryType));
         }
 
-        if(filter.AllowedVRAMs.Count != 0)
+        if(filter.VramMin != null)
         {
-            query = query.Where(product => filter.AllowedVRAMs.Contains(product.VRAM));
+            query = query.Where(product => product.VRAM >= filter.VramMin);
+        }
+
+        if(filter.VramMax != null)
+        {
+            query = query.Where(product => product.VRAM < filter.VramMax);
         }
     }
 
-    void ApplyRamFilters(IQueryable<RAM> query, CatalogRamFilter filter)
+    void ApplyRamFilters(ref IQueryable<RAM> query, CatalogRamFilter filter)
     {
-        if(filter.MemoryType != null)
+        if(!String.IsNullOrWhiteSpace(filter.MemoryType))
         {
-            query = query.Where(product => product.MemoryType.Contains(filter.MemoryType));
+            string MemoryType = filter.MemoryType.ToLower();
+            query = query.Where(product => product.MemoryType.ToLower().Contains(MemoryType));
         }
 
-        if(filter.AllowedAmountsOfMemory.Count() != 0)
+        if(filter.AmountOfMemoryMin != null)
         {
-            query = query.Where(product => filter.AllowedAmountsOfMemory.Contains(product.AmountOfMemory));
+            query = query.Where(product => product.AmountOfMemory >= filter.AmountOfMemoryMin);
+        }
+
+        if(filter.AmountOfMemoryMax != null)
+        {
+            query = query.Where(product => product.AmountOfMemory < filter.AmountOfMemoryMax);
         }
     }
-
 }

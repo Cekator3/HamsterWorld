@@ -1,0 +1,35 @@
+@model CatalogCpuFilter
+
+
+<div class="row">
+	<div class="col-12">
+		<label asp-for="ClockRateMin">Тактовая частота</label>
+	</div>
+	<div class="col">
+		<input asp-for="ClockRateMin" class="form-control" placeholder="от 0">
+	</div>
+	<div class="col">
+		<input asp-for="ClockRateMax" class="form-control" placeholder="до 999999">
+	</div>
+</div>
+
+<div class="row">
+	<div class="col-12">
+		<label asp-for="NumberOfCoresMin">Количество ядер</label>
+	</div>
+	<div class="col">
+		<input asp-for="NumberOfCoresMin" class="form-control" placeholder="от 0">
+	</div>
+	<div class="col">
+		<input asp-for="NumberOfCoresMax" class="form-control" placeholder="до 999999">
+	</div>
+</div>
+
+<div class="row">
+	<div class="col-12">
+		<label asp-for="NumberOfCoresMin">Сокет</label>
+	</div>
+	<div class="col">
+		<input asp-for="Socket" class="form-control" placeholder="AM3">
+	</div>
+</div>

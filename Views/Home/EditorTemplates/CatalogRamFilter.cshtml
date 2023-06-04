@@ -1,0 +1,22 @@
+@model CatalogRamFilter
+
+<div class="row">
+	<div class="col-12">
+		<label asp-for="AmountOfMemoryMin">Объем памяти(ГБ)</label>
+	</div>
+	<div class="col">
+		<input asp-for="AmountOfMemoryMin" class="form-control" placeholder="от 0">
+	</div>
+	<div class="col">
+		<input asp-for="AmountOfMemoryMax" class="form-control" placeholder="до 999999">
+	</div>
+</div>
+
+<div class="row">
+	<div class="col-12">
+		<label asp-for="MemoryType">Тип памяти</label>
+	</div>
+	<div class="col">
+		<input asp-for="MemoryType" class="form-control" placeholder="DDR4">
+	</div>
+</div>

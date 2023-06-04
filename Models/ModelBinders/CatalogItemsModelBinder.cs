@@ -14,60 +14,52 @@ namespace HamsterWorld.ModelBinders
 			}
 
 			string? Model = GetProductModel(bindingContext);
-			decimal MinPrice = GetProductMinPrice(bindingContext);
+			decimal? MinPrice = GetProductMinPrice(bindingContext);
 			decimal? MaxPrice = GetProductMaxPrice(bindingContext);
 
 			if(category == Product.Categorys.CPU)
 			{
-				int ClockRateMin = GetClockRateMin(bindingContext);
-				int? ClockRateMax = GetClockRateMax(bindingContext);
-				List<ushort> AllowedNumbersOfCores = GetAllowedNumbersOfCores(bindingContext);
-				List<string> AllowedSockets = GetAllowedSockets(bindingContext);
-
 				CatalogCpuFilter filter = new CatalogCpuFilter()
 				{
 					filterType = (Product.Categorys)category,
 					Model = Model,
 					MinPrice = MinPrice,
 					MaxPrice = MaxPrice,
-					ClockRateMin = ClockRateMin,
-					ClockRateMax = ClockRateMax,
-					AllowedNumbersOfCores = AllowedNumbersOfCores,
-					AllowedSockets = AllowedSockets
+					ClockRateMin = GetClockRateMinOfCpu(bindingContext),
+					ClockRateMax = GetClockRateMaxOfCpu(bindingContext),
+					NumberOfCoresMin = GetMinNumberOfCoresOfCpu(bindingContext),
+					NumberOfCoresMax = GetMaxNumberOfCoresOfCpu(bindingContext),
+					Socket = GetSocketOfCpu(bindingContext)
 				};
 
 				bindingContext.Result = ModelBindingResult.Success(filter);
 			}
 			else if(category == Product.Categorys.GPU)
 			{
-				List<int> AllowedVRAMs = GetAllowedVRAMs(bindingContext);
-				string? MemoryType = GetMemoryType(bindingContext);
-
 				CatalogGpuFilter filter = new CatalogGpuFilter()
 				{
 					filterType = (Product.Categorys)category,
 					Model = Model,
 					MinPrice = MinPrice,
 					MaxPrice = MaxPrice,
-					AllowedVRAMs = AllowedVRAMs,
-					MemoryType = MemoryType
+					VramMin = GetVRamMinOfGpu(bindingContext),
+					VramMax = GetVRamMaxOfGpu(bindingContext),
+					MemoryType = GetMemoryTypeOfGpu(bindingContext)
 				};
 
 				bindingContext.Result = ModelBindingResult.Success(filter);
 			}
 			else if(category == Product.Categorys.RAM)
 			{
-				List<int> AllowedAmountsOfMemory = GetAllowedAmountsOfMemory(bindingContext);
-				string? MemoryType = GetMemoryType(bindingContext);
-
 				CatalogRamFilter filter = new CatalogRamFilter()
 				{
 					filterType = (Product.Categorys)category,
 					Model = Model,
 					MinPrice = MinPrice,
 					MaxPrice = MaxPrice,
-					AllowedAmountsOfMemory = AllowedAmountsOfMemory,
-					MemoryType = MemoryType
+					AmountOfMemoryMin = GetMinAmountOfMemoryOfRam(bindingContext),
+					AmountOfMemoryMax = GetMaxAmountOfMemoryOfRam(bindingContext),
+					MemoryType = GetMemoryTypeOfRam(bindingContext)
 				};
 
 				bindingContext.Result = ModelBindingResult.Success(filter);
@@ -78,7 +70,8 @@ namespace HamsterWorld.ModelBinders
 
 		Product.Categorys? GetFilterType(ModelBindingContext bindingContext)
 		{
-			string? categoryIdStr = bindingContext.ValueProvider.GetValue("filterType").FirstValue;
+			string? categoryIdStr = bindingContext.ValueProvider.GetValue("Filter.filterType").FirstValue
+											?? bindingContext.ValueProvider.GetValue("filterType").FirstValue;
 
 			if(Enum.TryParse(categoryIdStr, out Product.Categorys category))
 			{
@@ -90,101 +83,113 @@ namespace HamsterWorld.ModelBinders
 
 		string? GetProductModel(ModelBindingContext bindingContext)
 		{
-			return bindingContext.ValueProvider.GetValue("Model").FirstValue;
+			return bindingContext.ValueProvider.GetValue("Filter.Model").FirstValue;
 		}
 
-		decimal GetProductMinPrice(ModelBindingContext bindingContext)
+		decimal? GetProductMinPrice(ModelBindingContext bindingContext)
 		{
-			string? MinPriceStr = bindingContext.ValueProvider.GetValue("MinPrice").FirstValue;
+			string? MinPriceStr = bindingContext.ValueProvider.GetValue("Filter.MinPrice").FirstValue;
 
-			decimal.TryParse(MinPriceStr, out decimal MinPrice);
+			BindModelHelper.ParseNullable(MinPriceStr, out decimal? MinPrice, decimal.TryParse);
 
 			return MinPrice;
 		}
 
 		decimal? GetProductMaxPrice(ModelBindingContext bindingContext)
 		{
-			string? maxPriceStr = bindingContext.ValueProvider.GetValue("MaxPrice").FirstValue;
+			string? maxPriceStr = bindingContext.ValueProvider.GetValue("Filter.MaxPrice").FirstValue;
 
 			BindModelHelper.ParseNullable(maxPriceStr, out decimal? MaxPrice, decimal.TryParse);
 
 			return MaxPrice;
 		}
 
-		int GetClockRateMin(ModelBindingContext bindingContext)
+		int? GetClockRateMinOfCpu(ModelBindingContext bindingContext)
 		{
-			string? ClockRateMinStr = bindingContext.ValueProvider.GetValue("ClockRateMin").FirstValue;
+			string? ClockRateMinStr = bindingContext.ValueProvider.GetValue("cpuFilter.ClockRateMin").FirstValue;
 
-			int.TryParse(ClockRateMinStr, out int ClockRateMin);
+			BindModelHelper.ParseNullable(ClockRateMinStr, out int? ClockRateMin, int.TryParse);
 
 			return ClockRateMin;
 		}
 
-		int? GetClockRateMax(ModelBindingContext bindingContext)
+		int? GetClockRateMaxOfCpu(ModelBindingContext bindingContext)
 		{
-			string? ClockRateMaxStr = bindingContext.ValueProvider.GetValue("ClockRateMax").FirstValue;
+			string? ClockRateMaxStr = bindingContext.ValueProvider.GetValue("cpuFilter.ClockRateMax").FirstValue;
 
 			BindModelHelper.ParseNullable(ClockRateMaxStr, out int? ClockRateMax, int.TryParse);
 
 			return ClockRateMax;
 		}
 
-		List<ushort> GetAllowedNumbersOfCores(ModelBindingContext bindingContext)
+		ushort? GetMinNumberOfCoresOfCpu(ModelBindingContext bindingContext)
 		{
-			List<string> AllowedNumbersOfCoresStrs = bindingContext.ValueProvider.GetValue("ClockRateMax").ToList();
+			string? numberOfCoresMinStr = bindingContext.ValueProvider.GetValue("cpuFilter.NumberOfCoresMin").FirstValue;
 
-			List<ushort> result = new List<ushort>();
-			foreach(string numberOfCores in AllowedNumbersOfCoresStrs)
-			{
-				if(ushort.TryParse(numberOfCores, out ushort tmp))
-				{
-					result.Add(tmp);
-				}
-			}
+			BindModelHelper.ParseNullable(numberOfCoresMinStr, out ushort? NumberOfCores, ushort.TryParse);
 
-			return result;
+			return NumberOfCores;
 		}
 
-		List<string> GetAllowedSockets(ModelBindingContext bindingContext)
+		ushort? GetMaxNumberOfCoresOfCpu(ModelBindingContext bindingContext)
 		{
-			return bindingContext.ValueProvider.GetValue("AllowedSockets").ToList();
+			string? maxNumberOfCoresStr = bindingContext.ValueProvider.GetValue("cpuFilter.NumberOfCoresMax").FirstValue;
+
+			BindModelHelper.ParseNullable(maxNumberOfCoresStr, out ushort? NumberOfCoresMax, ushort.TryParse);
+
+			return NumberOfCoresMax;
+		}
+		
+
+		string? GetSocketOfCpu(ModelBindingContext bindingContext)
+		{
+			return bindingContext.ValueProvider.GetValue("cpuFilter.Socket").FirstValue;
 		}
 
-		List<int> GetAllowedVRAMs(ModelBindingContext bindingContext)
+		int? GetVRamMinOfGpu(ModelBindingContext bindingContext)
 		{
-			List<string> AllowedVRAMsStrs = bindingContext.ValueProvider.GetValue("AllowedVRAMs").ToList();
+			string? VRamMinStr = bindingContext.ValueProvider.GetValue("gpuFilter.VramMax").FirstValue;
 
-			List<int> result = new List<int>();
-			foreach(string VRAM in AllowedVRAMsStrs)
-			{
-				if(int.TryParse(VRAM, out int tmp))
-				{
-					result.Add(tmp);
-				}
-			}
+			BindModelHelper.ParseNullable(VRamMinStr, out int? VRamMin, int.TryParse);
 
-			return result;
+			return VRamMin;
 		}
 
-		string? GetMemoryType(ModelBindingContext bindingContext)
+		int? GetVRamMaxOfGpu(ModelBindingContext bindingContext)
 		{
-			return bindingContext.ValueProvider.GetValue("MemoryType").FirstValue;
+			string? VRamMaxStr = bindingContext.ValueProvider.GetValue("gpuFilter.VramMin").FirstValue;
+
+			BindModelHelper.ParseNullable(VRamMaxStr, out int? VRamMax, int.TryParse);
+
+			return VRamMax;
 		}
 
-		List<int> GetAllowedAmountsOfMemory(ModelBindingContext bindingContext)
+		string? GetMemoryTypeOfGpu(ModelBindingContext bindingContext)
 		{
-			List<string> AllowedAmountsOfMemoryStrs = bindingContext.ValueProvider.GetValue("AllowedAmountsOfMemory").ToList();
+			return bindingContext.ValueProvider.GetValue("gpuFilter.MemoryType").FirstValue;
+		}
 
-			List<int> result = new List<int>();
-			foreach(string amountOfMemory in AllowedAmountsOfMemoryStrs)
-			{
-				if(int.TryParse(amountOfMemory, out int tmp))
-				{
-					result.Add(tmp);
-				}
-			}
+		int? GetMinAmountOfMemoryOfRam(ModelBindingContext bindingContext)
+		{
+			string? AmountOfMemoryMinStr = bindingContext.ValueProvider.GetValue("ramFilter.AmountOfMemoryMin").FirstValue;
 
-			return result;
+			BindModelHelper.ParseNullable(AmountOfMemoryMinStr, out int? AmountOfMemoryMin, int.TryParse);
+
+			return AmountOfMemoryMin;
+		}
+
+		int? GetMaxAmountOfMemoryOfRam(ModelBindingContext bindingContext)
+		{
+			string? AmountOfMemoryMaxStr = bindingContext.ValueProvider.GetValue("ramFilter.AmountOfMemoryMax").FirstValue;
+
+			BindModelHelper.ParseNullable(AmountOfMemoryMaxStr, out int? AmountOfMemoryMax, int.TryParse);
+
+			return AmountOfMemoryMax;
+		}
+
+		string? GetMemoryTypeOfRam(ModelBindingContext bindingContext)
+		{
+			return bindingContext.ValueProvider.GetValue("ramFilter.MemoryType").FirstValue;
 		}
 	}
 

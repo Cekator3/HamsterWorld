@@ -8,28 +8,31 @@ namespace HamsterWorld.Models
 	{
 		//Нужен, чтобы знать, какой фильтр использовать
 		public Product.Categorys filterType { get; set; }
-		public string? Model { get; set; } = "";
-		public decimal MinPrice { get; set; } = -1;
-		public decimal? MaxPrice { get; set; }
+		public string? Model { get; set; } = null;
+		public decimal? MinPrice { get; set; } = null;
+		public decimal? MaxPrice { get; set; } = null;
 	}
 
 	public class CatalogCpuFilter : CatalogFilter
 	{
-		public int ClockRateMin { get; set; } = 0;
+		public int? ClockRateMin { get; set; } = null;
 		public int? ClockRateMax { get; set; } = null;
-		public List<ushort> AllowedNumbersOfCores { get; set; } = new List<ushort>();
-		public List<string> AllowedSockets { get; set; } = new List<string>();
+		public ushort? NumberOfCoresMin { get; set; } = null;
+		public ushort? NumberOfCoresMax { get; set; } = null;
+		public string? Socket { get; set; } = null;
 	}
 
 	public class CatalogGpuFilter : CatalogFilter
 	{
-		public List<int> AllowedVRAMs { get; set; } = new List<int>();
+		public int? VramMin { get; set; } = null;
+		public int? VramMax { get; set; } = null;
 		public string? MemoryType { get; set; } = null;
 	}
 
 	public class CatalogRamFilter : CatalogFilter
 	{
-		public List<int> AllowedAmountsOfMemory { get; set; } = new List<int>();
+		public int? AmountOfMemoryMin { get; set; } = null;
+		public int? AmountOfMemoryMax { get; set; } = null;
 		public string? MemoryType { get; set; } = null;
 	}
 }

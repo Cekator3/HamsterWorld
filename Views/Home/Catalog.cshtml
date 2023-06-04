@@ -7,7 +7,27 @@
 }
 
 <div class="container">
-    @Html.EditorFor(m => m.Filter)
+    
+    <form method="get" asp-controller="Home" asp-action="Catalog">
+        @Html.EditorFor(m => m.Filter)
+
+        @if(Model.Filter is CatalogCpuFilter cpuFilter)
+        {
+            @Html.EditorFor(m => cpuFilter)
+        }
+        else if(Model.Filter is CatalogGpuFilter gpuFilter)
+        {
+            @Html.EditorFor(m => gpuFilter)
+        }
+        else if(Model.Filter is CatalogRamFilter ramFilter)
+        {
+            @Html.EditorFor(m => ramFilter)
+        }
+
+        <div class="row">
+            <button class="btn btn-primary" type="submit">Применить</button>
+        </div>
+    </form>
 
     @foreach (CatalogItem product in Model.CatalogItems)
     {
@@ -19,7 +39,7 @@
                 <div class="product-info">
                     <p>
                         <mark>
-                            <a asp-action="ManageProduct" style="text-decoration: none;" asp-route-category=@ViewBag.Category asp-route-storeId=@ViewBag.StoreId asp-route-id=@product.Id>@product.ToString()</a>
+                            <a asp-action="ViewProduct" style="text-decoration: none;" asp-route-category=@ViewBag.Category asp-route-storeId=@ViewBag.StoreId asp-route-id=@product.Id>@product.ToString()</a>
                         </mark>
                     </p>
                 </div>
