@@ -8,26 +8,32 @@
 
 <div class="container">
     
-    <form method="get" asp-controller="Home" asp-action="Catalog">
-        @Html.EditorFor(m => m.Filter)
+    <div class="container-fluid px-0 mb-4">
+        <form method="get" asp-controller="Home" asp-action="Catalog">
+            <div class="container-fluid px-0">
+                @Html.EditorFor(m => m.Filter)
 
-        @if(Model.Filter is CatalogCpuFilter cpuFilter)
-        {
-            @Html.EditorFor(m => cpuFilter)
-        }
-        else if(Model.Filter is CatalogGpuFilter gpuFilter)
-        {
-            @Html.EditorFor(m => gpuFilter)
-        }
-        else if(Model.Filter is CatalogRamFilter ramFilter)
-        {
-            @Html.EditorFor(m => ramFilter)
-        }
+                @if(Model.Filter is CatalogCpuFilter cpuFilter)
+                {
+                    @Html.EditorFor(m => cpuFilter)
+                }
+                else if(Model.Filter is CatalogGpuFilter gpuFilter)
+                {
+                    @Html.EditorFor(m => gpuFilter)
+                }
+                else if(Model.Filter is CatalogRamFilter ramFilter)
+                {
+                    @Html.EditorFor(m => ramFilter)
+                }
 
-        <div class="row">
-            <button class="btn btn-primary" type="submit">Применить</button>
-        </div>
-    </form>
+                <div class="row">
+                    <div class="col-12">
+                        <button class="btn btn-primary" type="submit">Применить</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
 
     @foreach (CatalogItem product in Model.CatalogItems)
     {
@@ -37,17 +43,23 @@
             </div>
             <div class="col-12 col-sm-6">
                 <div class="product-info">
-                    <p>
+                    <span>
                         <mark>
                             <a asp-action="ViewProduct" style="text-decoration: none;" asp-route-category=@ViewBag.Category asp-route-storeId=@ViewBag.StoreId asp-route-id=@product.Id>@product.ToString()</a>
                         </mark>
-                    </p>
+                    </span>
                 </div>
             </div>
             <div class="col-12 col-sm-3">
                 <div class="product-price">
-                    <p>@product.Price руб.</p>
+                    <span>@product.Price руб.</span>
                 </div>
+                <div class="mt-4">
+                    <button class="btn btn-primary">Купить</button>
+                </div>
+            </div>
+            <div class="offset-sm-3">
+                <button class="link-primary" asp-action="ProductInStores" asp-route-categoryId="@Model.Filter.filterType" asp-route-productId="@product.Id">В магазинах</button>
             </div>
         </div>
     }

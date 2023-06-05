@@ -69,6 +69,22 @@ public class HomeController : Controller
         return View(bindingModel);
     }
 
+    public async Task<IActionResult> ProductInStores(byte categoryId, int productId)
+    {
+        Product? product = await _context.Products.FindAsync(productId);
+        if(product == null)
+        {
+            return NotFound("Такого товара не существует");
+        }
+
+        await _context.Entry(product).Collection(prod => prod.Assortments!).Query().Where(assort => assort.Amount > 0).Include(e => e.Store).LoadAsync();
+
+
+        List<Store> stores = _context.Stores.Local.ToList();
+
+        return View();
+    }
+
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {
