@@ -1,0 +1,38 @@
+@model List<ProductInStoresBindingModel>
+@{
+	ViewBag.Title = "Количество товара в магазине";
+}
+@section Stylesheets {
+    <link rel="stylesheet" href="~/css/Home/ProductInStores.css" asp-append-version="true" />
+}
+
+<div class="container-sm px-0 mx-0">
+    <div class="row px-0 mx-0">
+        <div class="col-xs-12 col-xl-7 px-0 mx-0">
+				<div class="container-fluid">
+					@foreach (var productInStore in Model)
+					{
+						<div class="productItem row border-bottom mb-3" storeCoordinatesX=@productInStore.Store.Coordinates.X storeCoordinatesY=@productInStore.Store.Coordinates.Y>
+							<div class="col-12">
+								<h2 class="text-primary">@productInStore.Store.Name</h2>
+							</div>
+							<div class="col-12">
+								<span class="text-secondary">@productInStore.Store.Address</span>
+							</div>
+							<div class="col-12">
+								<span class="text-secondary">Ежедневно с @productInStore.Store.OpeningTime до @productInStore.Store.ClosingTime</span>
+							</div>
+							<div class="col-12 mb-3">
+								<span>Количество товара: @productInStore.AmountOfProduct</span>
+							</div>
+						</div>
+					}
+				</div>
+        </div>
+        <div class="col-xs-12 col-xl-5 mx-12" id="map">
+            <img class="w-100" src="">
+        </div>
+    </div>
+</div>
+
+<script src="~/js/Home/ProductInStores.js"></script>

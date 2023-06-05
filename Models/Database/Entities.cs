@@ -76,6 +76,9 @@ namespace HamsterWorld.Models
       public int ProductId { get; set; }
       //Столбец
       public int Amount { get; set; }
+
+      //Нав свойство
+      public Store? store { get; set; }
    }
 
    //Страна производитель

@@ -22,7 +22,7 @@ namespace HamsterWorld.Models
       public ApplicationContext(DbContextOptions<ApplicationContext> options) : base(options)
       {
             // Database.EnsureDeleted();
-            Database.EnsureCreated();
+            // Database.EnsureCreated();
       }
 
       protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -117,7 +117,7 @@ namespace HamsterWorld.Models
                         .WithMany(e => e.Assortments)
                         .HasForeignKey(a => a.ProductId),
                         j => j
-                        .HasOne<Store>()
+                        .HasOne<Store>(e => e.store)
                         .WithMany()
                         .HasForeignKey(a => a.StoreId)
                   );
@@ -133,7 +133,7 @@ namespace HamsterWorld.Models
                         .WithMany(e => e.Assortments)
                         .HasForeignKey(a => a.ProductId),
                         j => j
-                        .HasOne<Store>()
+                        .HasOne<Store>(e => e.store)
                         .WithMany()
                         .HasForeignKey(a => a.StoreId)
                   );
@@ -149,7 +149,7 @@ namespace HamsterWorld.Models
                         .WithMany(e => e.Assortments)
                         .HasForeignKey(a => a.ProductId),
                         j => j
-                        .HasOne<Store>()
+                        .HasOne<Store>(e => e.store)
                         .WithMany()
                         .HasForeignKey(a => a.StoreId)
                   );

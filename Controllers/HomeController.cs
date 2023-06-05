@@ -2,16 +2,20 @@
 using Microsoft.AspNetCore.Mvc;
 using HamsterWorld.Models;
 using Microsoft.EntityFrameworkCore;
+using YandexStaticMap;
+using NetTopologySuite.Geometries;
 
 namespace HamsterWorld.Controllers;
 
 public class HomeController : Controller
 {
     ApplicationContext _context;
+    IConfiguration _config;
 
-    public HomeController(ApplicationContext context)
+    public HomeController(ApplicationContext context, IConfiguration config)
     {
         _context = context;
+        _config = config;
     }
 
     public IActionResult Index()
@@ -69,20 +73,26 @@ public class HomeController : Controller
         return View(bindingModel);
     }
 
-    public async Task<IActionResult> ProductInStores(byte categoryId, int productId)
+    public async Task<IActionResult> ProductInStores(int productId)
     {
-        Product? product = await _context.Products.FindAsync(productId);
-        if(product == null)
-        {
-            return NotFound("Такого товара не существует");
-        }
+        //Get stores where the amount of product in them is more than zero
+        List<ProductInStoresBindingModel> bindModel = (await _context.Assortments.AsNoTracking()
+                                                            .Where(e => e.ProductId == productId && e.Amount > 0)
+                                                            .Include(e => e.store)
+                                                            .Select(e => new ProductInStoresBindingModel()
+                                                            {
+                                                                Store = e.store!,
+                                                                AmountOfProduct = e.Amount
+                                                            })
+                                                            .ToListAsync())!;
 
-        await _context.Entry(product).Collection(prod => prod.Assortments!).Query().Where(assort => assort.Amount > 0).Include(e => e.Store).LoadAsync();
+        return View(bindModel);
+    }
 
-
-        List<Store> stores = _context.Stores.Local.ToList();
-
-        return View();
+    public IActionResult GetYandexMapQuery(double coordinatesX, double coordinatesY)
+    {
+        Point coordinates = new Point(coordinatesX, coordinatesY);
+        return Content(YandexStaticMapTools.GenerateSrcAttributeForMap(coordinates, _config));
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
