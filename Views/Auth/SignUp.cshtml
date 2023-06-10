@@ -28,7 +28,7 @@
         <div class="form-group mb-2">
             <label for="CaptchaUserAnswer" class="mb-2">Введите капчу</label>
             <div class="mb-2">
-                <img src="/Auth/GetCaptchaImg" class="img-fluid">
+                <img src="" class="img-fluid" id="captcha-img">
             </div>
             <div class="mb-2">
                 <input asp-for="CaptchaUserAnswer" class="form-control" placeholder="Ответ на капчу">
@@ -38,3 +38,5 @@
         <button type="submit" class="btn btn-primary">Зарегестрироваться</button>
     </form> 
 </div>
+
+<script src="~/js/Auth/LoadCaptcha.js"></script>
