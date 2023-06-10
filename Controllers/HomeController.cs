@@ -169,32 +169,16 @@ public class HomeController : Controller
             return Forbid("В куках отсутствует индентификатор пользователя");
         }
 
-        //Try get user's current shopping list with its items
-        ShoppingList? userShoppingList = await _context.ShoppingLists
-                                                        .Include(e => e.Buyings)
-                                                        .FirstOrDefaultAsync(e => e.UserId == (int)userId && e.TimeOfSale == null);
+        //get user's current shopping list
+        ShoppingList? userShoppingList = await GetUserCurrentShoppingList((int)userId) ??
+                                        await CreateUserShoppingList((int)userId);
 
-        //Create user's shopping list if not exist
-        if(userShoppingList == null)
-        {
-            userShoppingList = await CreateUserShoppingList((int)userId);
-        }
-
-        if(CheckIfProductIsInUsersBuyingsList(userShoppingList.Buyings!, productId))
+        if(CheckIfProductIsInUserShoppingList(userShoppingList, productId))
         {
             return BadRequest("Этот товар уже в корзине");
         }
-
-        //add new product to user's shopping list
-        ItemOfShoppingList item = new ItemOfShoppingList()
-        {
-            ShoppingListId = userShoppingList.Id,
-            ProductId = productId,
-            Amount = 1
-        };
-
-        userShoppingList.Buyings!.Add(item);
-        await _context.SaveChangesAsync();
+        
+        await AddNewProductToUserShoppingList(userShoppingList, productId);
 
         return Ok();
     }
@@ -209,24 +193,11 @@ public class HomeController : Controller
             return Forbid("В куках отсутствует индентификатор пользователя");
         }
 
-        //Try get user's shopping list with its items
-        ShoppingList? userShoppingList = await _context.ShoppingLists
-                                                        .Include(e => e.Buyings)
-                                                        .FirstOrDefaultAsync(e => e.UserId == (int)userId && e.TimeOfSale == null);
+        //get user's shopping list
+        ShoppingList? userShoppingList = await GetUserCurrentShoppingList((int)userId) ??
+                                        await CreateUserShoppingList((int)userId);
 
-        //Ensure user's shopping list is exist
-        if(userShoppingList == null)
-        {
-            userShoppingList = await CreateUserShoppingList((int)userId);
-        }
-
-        //remove product from shopping list
-        ItemOfShoppingList? productToRemove = userShoppingList.Buyings!.FirstOrDefault(e => e.ProductId == productId);
-        if(productToRemove != null)
-        {
-            userShoppingList.Buyings!.Remove(productToRemove);
-            await _context.SaveChangesAsync();
-        }
+        await RemoveProductFromUserShoppingList(userShoppingList, productId);
 
         return Ok();
     }
@@ -241,7 +212,7 @@ public class HomeController : Controller
         }
 
         //Try get user's current shopping list with its items
-        ShoppingList? shoppingCart = await GetUserShoppingItems((int)userId);
+        ShoppingList? shoppingCart = await GetUserCurrentShoppingListWithProductDetailsLoaded((int)userId);
         if(shoppingCart == null)
         {
             shoppingCart = await CreateUserShoppingList((int)userId);
@@ -268,7 +239,7 @@ public class HomeController : Controller
         }
 
         //Obtain items from bd
-        ShoppingList? shoppingCart = await GetUserShoppingItems((int)userId);
+        ShoppingList? shoppingCart = await GetUserCurrentShoppingListWithProductDetailsLoaded((int)userId);
         if(shoppingCart == null || shoppingCart.Buyings!.Count == 0)
         {
             return NotFound("У пользователя нет сформированной корзины");
@@ -328,7 +299,7 @@ public class HomeController : Controller
             return Forbid("В куках отсутствует индентификатор пользователя");
         }
 
-        ShoppingList? shoppingCart = await GetUserShoppingItems((int)userId);
+        ShoppingList? shoppingCart = await GetUserCurrentShoppingListWithProductDetailsLoaded((int)userId);
 
         //Если у корзины определён TimeOfSale, то эта корзина старая: пользователь её оплачивал
         bool isUserShoppingCartNotExist = shoppingCart == null || shoppingCart.TimeOfSale != null || shoppingCart.Buyings!.Count == 0;
@@ -619,9 +590,16 @@ public class HomeController : Controller
         return (await GetUsersBuyingsIdList(userId)).Contains(productId);
     }
 
-    public bool CheckIfProductIsInUsersBuyingsList(List<ItemOfShoppingList> userBuyingsList, int productId)
+    public bool CheckIfProductIsInUserShoppingList(ShoppingList userShoppingList, int productId)
     {
-        return userBuyingsList.Any(e => e.ProductId == productId);
+        return userShoppingList.Buyings!.Any(e => e.ProductId == productId);
+    }
+
+    public async Task<ShoppingList?> GetUserCurrentShoppingList(int userId)
+    {
+        return await _context.ShoppingLists
+                            .Include(e => e.Buyings)
+                            .FirstOrDefaultAsync(e => e.UserId == (int)userId && e.TimeOfSale == null);
     }
 
     public async Task<ShoppingList> CreateUserShoppingList(int userId)
@@ -639,7 +617,32 @@ public class HomeController : Controller
         return userShoppingList;
     }
 
-    public async Task<ShoppingList?> GetUserShoppingItems(int userId)
+    public async Task AddNewProductToUserShoppingList(ShoppingList userShoppingList, int productId)
+    {
+        //add new product to user's shopping list
+        ItemOfShoppingList item = new ItemOfShoppingList()
+        {
+            ShoppingListId = userShoppingList.Id,
+            ProductId = productId,
+            Amount = 1
+        };
+
+        userShoppingList.Buyings!.Add(item);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task RemoveProductFromUserShoppingList(ShoppingList userShoppingList, int productId)
+    {
+        ItemOfShoppingList? productToRemove = userShoppingList.Buyings!.FirstOrDefault(e => e.ProductId == productId);
+
+        if(productToRemove != null)
+        {
+            userShoppingList.Buyings!.Remove(productToRemove);
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    public async Task<ShoppingList?> GetUserCurrentShoppingListWithProductDetailsLoaded(int userId)
     {
         //TODO вообще не уверен, что это эффективно. Следует зарефакторить
         //Загружаем все необходимые данные
