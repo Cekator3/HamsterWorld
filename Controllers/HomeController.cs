@@ -211,7 +211,7 @@ public class HomeController : Controller
             return Forbid("В куках отсутствует индентификатор пользователя");
         }
 
-        //Try get user's current shopping list with its items
+        //get user's current shopping list with its items
         ShoppingList? shoppingCart = await GetUserCurrentShoppingListWithProductDetailsLoaded((int)userId);
         if(shoppingCart == null)
         {
@@ -227,7 +227,8 @@ public class HomeController : Controller
     [HttpPost]
     public async Task<IActionResult> ShoppingCart(ShoppingCartBindingModel model)
     {
-        if(model.ShoppingItems == null)
+        bool isShoppingCartEmpty = model.ShoppingItems == null;
+        if(isShoppingCartEmpty)
         {
             return BadRequest();
         }
@@ -238,7 +239,7 @@ public class HomeController : Controller
             return Forbid("В куках отсутствует индентификатор пользователя");
         }
 
-        //Obtain items from bd
+        //Obtain items from db 
         ShoppingList? shoppingCart = await GetUserCurrentShoppingListWithProductDetailsLoaded((int)userId);
         if(shoppingCart == null || shoppingCart.Buyings!.Count == 0)
         {
@@ -249,12 +250,9 @@ public class HomeController : Controller
 
         foreach(ItemOfShoppingList itemFromDb in shoppingCart.Buyings!)
         {
-            int maxProductAmount = await _context.Assortments
-                                                .Where(e => e.ProductId == itemFromDb.ProductId)
-                                                .SumAsync(e => e.Amount);
+            int productAmountLimit = await GetRemainingAmountOfProductInStores(itemFromDb.ProductId);
 
-            ShoppingItem? itemFromUserForm = model.ShoppingItems
-                                                .FirstOrDefault(e => e.ProductId == itemFromDb.ProductId);
+            ShoppingItem? itemFromUserForm = model.ShoppingItems!.FirstOrDefault(e => e.ProductId == itemFromDb.ProductId);
 
             if(itemFromUserForm == null)
             {
@@ -263,12 +261,13 @@ public class HomeController : Controller
 
             if(itemFromUserForm.Amount <= 0)
             {
-                ModelState.AddModelError("", "Количество товара не может быть меньше нуля");
+                ModelState.AddModelError("", "Количество товара для покупки должно быть положительным");
                 break;
             }
-            if(itemFromUserForm.Amount > maxProductAmount)
+
+            if(itemFromUserForm.Amount > productAmountLimit)
             {
-                ModelState.AddModelError("", $"Количество оставшихся {itemFromUserForm.ProductName} в магазинах - {maxProductAmount}");
+                ModelState.AddModelError("", $"Количество оставшихся {itemFromUserForm.ProductName} в магазинах - {productAmountLimit}");
             }
 
             itemFromDb.Amount = itemFromUserForm.Amount;
@@ -282,6 +281,7 @@ public class HomeController : Controller
         }
         else
         {
+            //save all changes
             shoppingCart.FinalPrice = finalPrice;
             await _context.SaveChangesAsync();
         }
@@ -292,7 +292,7 @@ public class HomeController : Controller
     [Authorize]
     public async Task<IActionResult> Checkout(int shoppingListId)
     {
-        //Шуточная страница
+        //Это действие - Эмуляция покупки
         int? userId = GetUserIdFromCookies(HttpContext);
         if(userId == null)
         {
@@ -301,49 +301,26 @@ public class HomeController : Controller
 
         ShoppingList? shoppingCart = await GetUserCurrentShoppingListWithProductDetailsLoaded((int)userId);
 
-        //Если у корзины определён TimeOfSale, то эта корзина старая: пользователь её оплачивал
-        bool isUserShoppingCartNotExist = shoppingCart == null || shoppingCart.TimeOfSale != null || shoppingCart.Buyings!.Count == 0;
+        bool isUserShoppingCartNotExist = shoppingCart == null || shoppingCart.Buyings!.Count == 0;
         if(isUserShoppingCartNotExist)
         {
             return RedirectToAction("ShoppingCart");
         }
 
-        int[] productIds = shoppingCart.Buyings.Select(e => e.ProductId).ToArray();
-
-        List<Assortment> assortments = await _context.Assortments
-                                                    .Where(e => productIds.Contains(e.ProductId))
-                                                    .ToListAsync();
-
-
+        List<Assortment> assortments = await GetRemainingAmountOfProductsThatWereFoundInUserShoppingCart(shoppingCart!);
+        
         //Есть шанс, что данные устарели и количество продуктов стало меньше, чем было.
-        foreach(ItemOfShoppingList buying in shoppingCart.Buyings)
+        foreach(ItemOfShoppingList buying in shoppingCart!.Buyings!)
         {
-            //Смотрим на количество одного товара в разных магазинах
-            List<Assortment> productAssortmentFromDiffStores = assortments.Where(e => e.ProductId == buying.ProductId).ToList();
+            //Amounts of product in different stores
+            List<Assortment> assortmentsOfProduct = assortments.Where(e => e.ProductId == buying.ProductId).ToList();
 
-            //Суммарное кол-во
-            int maxProductAmount = productAssortmentFromDiffStores.Sum(e => e.Amount);
-                                            
-            if(buying.Amount > maxProductAmount)
+            if(!IsStoresHaveEnoughProductAmountToPerformDeal(assortmentsOfProduct, buying.Amount))
             {
                 return RedirectToAction("ShoppingCart");
             }
 
-            //Типо эти товары берём из разных магазинов и доставляем в одну точку
-            foreach(Assortment assortment in productAssortmentFromDiffStores)
-            {
-                if(assortment.Amount > buying.Amount)
-                {
-                    assortment.Amount -= buying.Amount;
-                    buying.Amount = 0;
-                    break;
-                }
-                else
-                {
-                    buying.Amount -= assortment.Amount;
-                    assortment.Amount = 0;
-                }
-            }
+            SimulatePerfomingDeal(assortmentsOfProduct, buying.Amount);
         }
 
         shoppingCart.TimeOfSale = DateTimeOffset.UtcNow;
@@ -597,6 +574,7 @@ public class HomeController : Controller
 
     public async Task<ShoppingList?> GetUserCurrentShoppingList(int userId)
     {
+        //Если у корзины определён TimeOfSale, то эта корзина старая: пользователь её оплачивал
         return await _context.ShoppingLists
                             .Include(e => e.Buyings)
                             .FirstOrDefaultAsync(e => e.UserId == (int)userId && e.TimeOfSale == null);
@@ -690,5 +668,47 @@ public class HomeController : Controller
         };
 
         return model;
+    }
+
+    public async Task<int> GetRemainingAmountOfProductInStores(int productId)
+    {
+        return await _context.Assortments
+                                .Where(e => e.ProductId == productId)
+                                .SumAsync(e => e.Amount);
+    }
+
+    bool IsStoresHaveEnoughProductAmountToPerformDeal(List<Assortment> assortmentsOfProduct, int productAmount)
+    {
+        int productAmountLimit = assortmentsOfProduct.Sum(e => e.Amount);
+                                        
+        return productAmount <= productAmountLimit;
+    }
+
+    void SimulatePerfomingDeal(List<Assortment> assortmentsOfProduct, int productAmount)
+    {
+        foreach(Assortment assortment in assortmentsOfProduct)
+        {
+            if(assortment.Amount > productAmount)
+            {
+                assortment.Amount -= productAmount;
+                productAmount = 0;
+                break;
+            }
+            else
+            {
+                productAmount -= assortment.Amount;
+                assortment.Amount = 0;
+            }
+        }
+    }
+
+    async Task<List<Assortment>> GetRemainingAmountOfProductsThatWereFoundInUserShoppingCart(ShoppingList userShoppingCart)
+    {
+        int[] productIds = userShoppingCart!.Buyings!.Select(e => e.ProductId).ToArray();
+
+        //Get remaining amount of products that were found in the user’s shopping cart
+        return await _context.Assortments
+                            .Where(e => productIds.Contains(e.ProductId))
+                            .ToListAsync();
     }
 }
