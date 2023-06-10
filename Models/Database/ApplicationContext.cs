@@ -18,11 +18,12 @@ namespace HamsterWorld.Models
       public DbSet<ShoppingList> ShoppingLists { get; set; } = null!;
       public DbSet<CommentToProduct> CommentsToProducts { get; set; } = null!;
       public DbSet<VoteToComment> CommentsVotes { get; set; } = null!;
+      public DbSet<ItemOfShoppingList> ItemsOfShoppingLists { get; set; } = null!;
 
       public ApplicationContext(DbContextOptions<ApplicationContext> options) : base(options)
       {
             // Database.EnsureDeleted();
-            // Database.EnsureCreated();
+            Database.EnsureCreated();
       }
 
       protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -105,6 +106,12 @@ namespace HamsterWorld.Models
                   .HasMany<Store>(e => e.AdministratingStores)
                   .WithMany(e => e.Administrators)
                   .UsingEntity(t => t.ToTable("storesAdministrators"));
+
+            //Сущности User и ShoppingList связаны в отношении один ко многим.
+            modelBuilder.Entity<User>()
+                  .HasMany<ShoppingList>(e => e.ShoppingLists)
+                  .WithOne()
+                  .HasForeignKey(e => e.UserId);
 
             //Store и GPU связаны отношением многие ко многим через промежуточную таблицу Assortment
             modelBuilder.Entity<Store>()

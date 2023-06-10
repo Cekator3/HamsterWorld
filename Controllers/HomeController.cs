@@ -1,5 +1,7 @@
 ﻿using System.Diagnostics;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using HamsterWorld.Models;
 using Microsoft.EntityFrameworkCore;
 using YandexStaticMap;
@@ -64,10 +66,19 @@ public class HomeController : Controller
                 return NotFound("Такой категории не существует");
         }
 
+        int? userId = GetUserIdFromCookies(HttpContext);
+
+        List<int> usersShoppingList = new List<int>();
+        if(userId != null)
+        {
+            usersShoppingList = await GetUsersBuyingsIdList((int)userId);
+        }
+
         CatalogBindingModel bindingModel = new CatalogBindingModel()
         {
             Filter = filter,
-            CatalogItems = catalogItems
+            CatalogItems = catalogItems,
+            ProductsFromUsersShoppingList = usersShoppingList
         };
 
         return View(bindingModel);
@@ -92,7 +103,321 @@ public class HomeController : Controller
     public IActionResult GetYandexMapQuery(double coordinatesX, double coordinatesY)
     {
         Point coordinates = new Point(coordinatesX, coordinatesY);
-        return Content(YandexStaticMapTools.GenerateSrcAttributeForMap(coordinates, _config));
+
+        string imgSrc = YandexStaticMapTools.GenerateSrcAttributeForMap(coordinates, _config);
+
+        return Content(imgSrc);
+    }
+
+    public async Task<IActionResult> ViewProduct(int productId, byte categoryId)
+    {
+        Product.Categorys category = (Product.Categorys)categoryId;
+
+        ViewProductBindingModel? bindingModel = null;
+
+        switch(category)
+        {
+            case Product.Categorys.CPU:
+                CPU? cpu = await LoadProductDetails(_context.CPUs, productId);
+
+                if(cpu != null)
+                    bindingModel = new ViewCpuBindingModel(cpu);
+                break;
+
+            case Product.Categorys.GPU:
+                GPU? gpu = await LoadProductDetails(_context.GPUs, productId);
+
+                if(gpu != null)
+                    bindingModel = new ViewGpuBindingModel(gpu);
+                break;
+
+            case Product.Categorys.RAM:
+                RAM? ram = await LoadProductDetails(_context.RAMs, productId);
+
+                if(ram != null)
+                    bindingModel = new ViewRamBindingModel(ram);
+                break;
+
+            default:
+                return NotFound("Такой категории не существует");
+        }
+
+        bool productNotFound = bindingModel == null;
+        if(productNotFound)
+        {
+            return NotFound("Товар с таким Id и с такой категорией был не найден");
+        }
+
+        bindingModel!.AverageMark = await GetAverageMarkOfProduct(productId);
+
+        int? userId = GetUserIdFromCookies(HttpContext);
+        if(userId != null)
+        {
+            bindingModel.IsInUsersBuyingsList = await CheckIfProductIsInUsersBuyingsList((int)userId, productId);
+        }
+
+        return View(bindingModel);
+    }
+
+    [HttpPost]
+    [Authorize]
+    public async Task<IActionResult> AddProductToUserShoppingList(int productId)
+    {
+        int? userId = GetUserIdFromCookies(HttpContext);
+        if(userId == null)
+        {
+            return Forbid("В куках отсутствует индентификатор пользователя");
+        }
+
+        //Try get user's current shopping list with its items
+        ShoppingList? userShoppingList = await _context.ShoppingLists
+                                                        .Include(e => e.Buyings)
+                                                        .FirstOrDefaultAsync(e => e.UserId == (int)userId && e.TimeOfSale == null);
+
+        //Create user's shopping list if not exist
+        if(userShoppingList == null)
+        {
+            userShoppingList = await CreateUserShoppingList((int)userId);
+        }
+
+        if(CheckIfProductIsInUsersBuyingsList(userShoppingList.Buyings!, productId))
+        {
+            return BadRequest("Этот товар уже в корзине");
+        }
+
+        //add new product to user's shopping list
+        ItemOfShoppingList item = new ItemOfShoppingList()
+        {
+            ShoppingListId = userShoppingList.Id,
+            ProductId = productId,
+            Amount = 1
+        };
+
+        userShoppingList.Buyings!.Add(item);
+        await _context.SaveChangesAsync();
+
+        return Ok();
+    }
+
+    [HttpDelete]
+    [Authorize]
+    public async Task<IActionResult> RemoveProductFromUserShoppingList(int productId)
+    {
+        int? userId = GetUserIdFromCookies(HttpContext);
+        if(userId == null)
+        {
+            return Forbid("В куках отсутствует индентификатор пользователя");
+        }
+
+        //Try get user's shopping list with its items
+        ShoppingList? userShoppingList = await _context.ShoppingLists
+                                                        .Include(e => e.Buyings)
+                                                        .FirstOrDefaultAsync(e => e.UserId == (int)userId && e.TimeOfSale == null);
+
+        //Ensure user's shopping list is exist
+        if(userShoppingList == null)
+        {
+            userShoppingList = await CreateUserShoppingList((int)userId);
+        }
+
+        //remove product from shopping list
+        ItemOfShoppingList? productToRemove = userShoppingList.Buyings!.FirstOrDefault(e => e.ProductId == productId);
+        if(productToRemove != null)
+        {
+            userShoppingList.Buyings!.Remove(productToRemove);
+            await _context.SaveChangesAsync();
+        }
+
+        return Ok();
+    }
+
+    [Authorize]
+    public async Task<IActionResult> ShoppingCart()
+    {
+        int? userId = GetUserIdFromCookies(HttpContext);
+        if(userId == null)
+        {
+            return Forbid("В куках отсутствует индентификатор пользователя");
+        }
+
+        //Try get user's current shopping list with its items
+        ShoppingList? shoppingCart = await GetUserShoppingItems((int)userId);
+        if(shoppingCart == null)
+        {
+            shoppingCart = await CreateUserShoppingList((int)userId);
+        }
+
+        ShoppingCartBindingModel model = GenerateShoppingCartBindingModel(shoppingCart);
+
+        return View(model);
+    }
+
+    [Authorize]
+    [HttpPost]
+    public async Task<IActionResult> ShoppingCart(ShoppingCartBindingModel model)
+    {
+        if(model.ShoppingItems == null)
+        {
+            return BadRequest();
+        }
+
+        int? userId = GetUserIdFromCookies(HttpContext);
+        if(userId == null)
+        {
+            return Forbid("В куках отсутствует индентификатор пользователя");
+        }
+
+        //Obtain items from bd
+        ShoppingList? shoppingCart = await GetUserShoppingItems((int)userId);
+        if(shoppingCart == null || shoppingCart.Buyings!.Count == 0)
+        {
+            return NotFound("У пользователя нет сформированной корзины");
+        }
+
+        decimal finalPrice = 0.0m;
+
+        foreach(ItemOfShoppingList itemFromDb in shoppingCart.Buyings!)
+        {
+            int maxProductAmount = await _context.Assortments
+                                                .Where(e => e.ProductId == itemFromDb.ProductId)
+                                                .SumAsync(e => e.Amount);
+
+            ShoppingItem? itemFromUserForm = model.ShoppingItems
+                                                .FirstOrDefault(e => e.ProductId == itemFromDb.ProductId);
+
+            if(itemFromUserForm == null)
+            {
+                return BadRequest("Данные корзины были изменены некорректно");
+            }
+
+            if(itemFromUserForm.Amount <= 0)
+            {
+                ModelState.AddModelError("", "Количество товара не может быть меньше нуля");
+                break;
+            }
+            if(itemFromUserForm.Amount > maxProductAmount)
+            {
+                ModelState.AddModelError("", $"Количество оставшихся {itemFromUserForm.ProductName} в магазинах - {maxProductAmount}");
+            }
+
+            itemFromDb.Amount = itemFromUserForm.Amount;
+            finalPrice += itemFromDb.Product.Price * itemFromDb.Amount;
+        }
+
+        if(!ModelState.IsValid)
+        {
+            model = GenerateShoppingCartBindingModel(shoppingCart);
+            return View(model);
+        }
+        else
+        {
+            shoppingCart.FinalPrice = finalPrice;
+            await _context.SaveChangesAsync();
+        }
+        
+        return RedirectToAction("Checkout", new {shoppingListId = shoppingCart.Id});
+    }
+
+    [Authorize]
+    public async Task<IActionResult> Checkout(int shoppingListId)
+    {
+        //Шуточная страница
+        int? userId = GetUserIdFromCookies(HttpContext);
+        if(userId == null)
+        {
+            return Forbid("В куках отсутствует индентификатор пользователя");
+        }
+
+        ShoppingList? shoppingCart = await GetUserShoppingItems((int)userId);
+
+        //Если у корзины определён TimeOfSale, то эта корзина старая: пользователь её оплачивал
+        bool isUserShoppingCartNotExist = shoppingCart == null || shoppingCart.TimeOfSale != null || shoppingCart.Buyings!.Count == 0;
+        if(isUserShoppingCartNotExist)
+        {
+            return RedirectToAction("ShoppingCart");
+        }
+
+        int[] productIds = shoppingCart.Buyings.Select(e => e.ProductId).ToArray();
+
+        List<Assortment> assortments = await _context.Assortments
+                                                    .Where(e => productIds.Contains(e.ProductId))
+                                                    .ToListAsync();
+
+
+        //Есть шанс, что данные устарели и количество продуктов стало меньше, чем было.
+        foreach(ItemOfShoppingList buying in shoppingCart.Buyings)
+        {
+            //Смотрим на количество одного товара в разных магазинах
+            List<Assortment> productAssortmentFromDiffStores = assortments.Where(e => e.ProductId == buying.ProductId).ToList();
+
+            //Суммарное кол-во
+            int maxProductAmount = productAssortmentFromDiffStores.Sum(e => e.Amount);
+                                            
+            if(buying.Amount > maxProductAmount)
+            {
+                return RedirectToAction("ShoppingCart");
+            }
+
+            //Типо эти товары берём из разных магазинов и доставляем в одну точку
+            foreach(Assortment assortment in productAssortmentFromDiffStores)
+            {
+                if(assortment.Amount > buying.Amount)
+                {
+                    assortment.Amount -= buying.Amount;
+                    buying.Amount = 0;
+                    break;
+                }
+                else
+                {
+                    buying.Amount -= assortment.Amount;
+                    assortment.Amount = 0;
+                }
+            }
+        }
+
+        shoppingCart.TimeOfSale = DateTimeOffset.UtcNow;
+
+        //Сохраняем изменения
+        await _context.SaveChangesAsync();
+        return View(shoppingCart.FinalPrice);
+    }
+
+    [Authorize(Policy = Role.UserRoleName)]
+    public async Task<IActionResult> AddNewFeedback(ushort feedbackRating, string feedbackText, int productId)
+    {
+        if(feedbackRating < 1 || feedbackRating > 5)
+        {
+            return BadRequest("Количество звёзд не может быть больше пяти");
+        }
+        if(string.IsNullOrWhiteSpace(feedbackText))
+        {
+            return BadRequest("Текст отзыва не содержит символов, либо содержит только пробелы");
+        }
+        
+        int? userId = GetUserIdFromCookies(HttpContext);
+        if(userId == null)
+        {
+            return Forbid("В куках отсутствует индентификатор пользователя");
+        }
+
+        if(await IsFeedbackToProductWithThisAuthorExist((int)userId, productId))
+        {
+            return BadRequest("Вы уже писали отзыв на этот товар");
+        }
+
+        CommentToProduct feedback = new CommentToProduct()
+        {
+            ProductId = productId,
+            AuthorId = userId,
+            Content = feedbackText,
+            WritingDate = DateTimeOffset.UtcNow,
+            AmountOfStars = feedbackRating
+        };
+
+        await _context.CommentsToProducts.AddAsync(feedback);
+        await _context.SaveChangesAsync();
+
+        return Ok();
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
@@ -238,5 +563,129 @@ public class HomeController : Controller
         {
             query = query.Where(product => product.AmountOfMemory < filter.AmountOfMemoryMax);
         }
+    }
+
+    public async Task<T?> LoadProductDetails<T>(DbSet<T> dbSet, int productId) where T:Product
+    {
+        return await dbSet.AsNoTracking()
+                        .Include(cpu => cpu.Pictures)
+                        .Include(cpu => cpu.Comments)
+                            !.ThenInclude(e => e.ChildrenComments)
+                        .AsSplitQuery()
+                        .FirstOrDefaultAsync(cpu => cpu.Id == productId);
+    }
+
+    public async Task<double> GetAverageMarkOfProduct(int productId)
+    {
+        return await _context.CommentsToProducts
+                            .Where(e => e.ProductId == productId)
+                            .AverageAsync(e => (double?)e.AmountOfStars) ?? 0.0;
+    }
+
+    public int? GetUserIdFromCookies(HttpContext context)
+    {
+        string? userId = HttpContext.User.Claims
+                                        .FirstOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier)
+                                        ?.Value;
+        
+        if(!int.TryParse(userId, out int result))
+        {
+            return null;
+        }
+
+        return result;
+    }
+
+    public async Task<bool> IsFeedbackToProductWithThisAuthorExist(int authorId, int productId)
+    {
+        return await _context.CommentsToProducts
+                                .AnyAsync(feedback => feedback.AuthorId == authorId && feedback.ProductId == productId );
+    }
+
+    public async Task<List<int>> GetUsersBuyingsIdList(int userId)
+    {
+        return (await _context.ShoppingLists.AsNoTracking()
+                            .Include(e => e.Buyings)
+                            .Select(e => new {e.UserId, e.Buyings, e.TimeOfSale})
+                            .FirstOrDefaultAsync(e => e.UserId == userId && e.TimeOfSale == null))
+                            ?.Buyings
+                            ?.Select(e => e.ProductId)
+                            .ToList() 
+                            ?? new List<int>();
+    }
+
+    public async Task<bool> CheckIfProductIsInUsersBuyingsList(int userId, int productId)
+    {
+        return (await GetUsersBuyingsIdList(userId)).Contains(productId);
+    }
+
+    public bool CheckIfProductIsInUsersBuyingsList(List<ItemOfShoppingList> userBuyingsList, int productId)
+    {
+        return userBuyingsList.Any(e => e.ProductId == productId);
+    }
+
+    public async Task<ShoppingList> CreateUserShoppingList(int userId)
+    {
+        ShoppingList userShoppingList = new ShoppingList()
+        {
+            UserId = userId,
+            Buyings = new List<ItemOfShoppingList>(),
+            FinalPrice = 0
+        };
+
+        await _context.ShoppingLists.AddAsync(userShoppingList);
+        await _context.SaveChangesAsync();
+
+        return userShoppingList;
+    }
+
+    public async Task<ShoppingList?> GetUserShoppingItems(int userId)
+    {
+        //TODO вообще не уверен, что это эффективно. Следует зарефакторить
+        //Загружаем все необходимые данные
+        ShoppingList? shoppingCart = await _context.ShoppingLists
+                                                    .Include(e => e.Buyings)
+                                                        !.ThenInclude(e => e.Product)
+                                                    .FirstOrDefaultAsync(e => e.TimeOfSale == null && e.UserId == userId);
+
+        if(shoppingCart == null)
+        {
+            return null;
+        }
+
+        List<Product> products = shoppingCart.Buyings!.Select(e => e.Product).ToList();
+        foreach(Product product in products)
+        {
+            await _context.Entry(product)
+                        .Collection(e => e.Pictures!)
+                        .Query()
+                        .OrderBy(e => e.OrderNumber)
+                        .Take(1)
+                        .LoadAsync();
+        }
+
+        return shoppingCart;
+    }
+
+    public ShoppingCartBindingModel GenerateShoppingCartBindingModel(ShoppingList shoppingCart)
+    {
+        List<ShoppingItem> items = shoppingCart.Buyings!.Select(e => new ShoppingItem()
+        {
+            ProductId = e.ProductId,
+            ProductName = e.Product.Model,
+            ProductPictureSrc = e.Product.Pictures!.First().FileName,
+            Amount = e.Amount,
+            Price = e.Product.Price
+        }).ToList();
+
+        decimal totalPrice = shoppingCart.Buyings!.Sum(e => e.Product.Price);
+
+        ShoppingCartBindingModel model = new ShoppingCartBindingModel()
+        {
+            ShoppingItems = items,
+            TotalPrice = totalPrice
+        };
+
+        return model;
     }
 }

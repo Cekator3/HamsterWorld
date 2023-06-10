@@ -10,10 +10,12 @@ namespace HamsterWorld.Models
       
       //Внешний ключ
       public ushort RoleId { get; set; }
+
       //Навигационные свойства
       public Role Role { get; set; } = null!;
       public List<Comment>? Comments { get; set; }
       public List<Store>? AdministratingStores { get; set; }
+      public List<ShoppingList> ShoppingLists { get; set; } = null!;
 
       //Столбцы
       public string Login { get; set; } = "";
@@ -159,11 +161,14 @@ namespace HamsterWorld.Models
       //Первичный ключ
       public int Id { get; set; }
 
+      //Внешний ключ
+      public int UserId { get; set; }
+
       //Навигационное свойство
       public List<ItemOfShoppingList>? Buyings;
 
       //Столбцы
-      public DateTime? TimeOfSale { get; set; }
+      public DateTimeOffset? TimeOfSale { get; set; }
       public decimal FinalPrice { get; set; }
    }
    public class ItemOfShoppingList

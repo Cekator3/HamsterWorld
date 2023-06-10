@@ -4,6 +4,7 @@ namespace HamsterWorld.Models
 	{
 		public CatalogFilter Filter { get; set; } = null!;
 		public List<CatalogItem> CatalogItems { get; set; } = new List<CatalogItem>();
+		public List<int> ProductsFromUsersShoppingList { get; set; } = new List<int>();
 	}
 
 	abstract public class CatalogItem

@@ -1,0 +1,141 @@
+@model ViewProductBindingModel
+@{
+   ViewData["Title"] = $"Купить {Model.GetTopName()}";
+   List<string> pictureSources = Model.Product.Pictures
+                                             !.OrderBy(e => e.OrderNumber)
+                                             .Select(e => $"/Images/Products/{e.FileName}")
+                                             .ToList();
+                                          
+   ushort carouselImgSize = 600;
+}
+@section Stylesheets {
+   <link rel="stylesheet" href="~/css/Home/ViewProduct.css" asp-append-version="true" />
+}
+
+<div class="container">
+   <h1 class="text-center">@Model.GetTopName()</h1>
+   @if(pictureSources.Count != 0)
+   {
+      <div id="carouselExampleIndicators" class="carousel slide" data-bs-ride="carousel">
+         <div class="carousel-indicators">
+            <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+            @for(byte i = 1; i < Model.Product.Pictures!.Count; i++)
+            {
+               <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="@i" aria-label="Slide @(i+1)"></button>
+            }
+         </div>
+         <div class="carousel-inner py-3" style="background-color: grey;">
+            <div class="carousel-item active">
+               <img src="@(pictureSources[0])" width="@carouselImgSize" height="@carouselImgSize" class="d-block mx-auto" alt="Товар">
+            </div>
+            @for (byte i = 1; i < pictureSources.Count; i++)
+            {
+               <div class="carousel-item">
+                  <img src="@(pictureSources[i])" width="@carouselImgSize" height="@carouselImgSize" class="d-block mx-auto" alt="Товар">
+               </div>
+            }
+         </div>
+         <button class="carousel-control-prev" style="background-color: grey;" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Previous</span>
+         </button>
+         <button class="carousel-control-next" style="background-color: grey;" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Next</span>
+         </button>
+      </div>
+   }
+
+   <div class="row">
+      <div class="col-12">
+         <span>Средняя оценка: @Model.AverageMark</span>
+      </div>
+      <div class="col-12">
+         <span><b>Цена: @Model.Product.Price</b></span>
+      </div>
+      <div class="col-12">
+         <a class="link-primary" asp-action="ProductInStores" asp-route-productId="@Model.Product.Id">В магазинах</a>
+      </div>
+      <div class="col-12">
+         @if(Model.IsInUsersBuyingsList)
+         {
+            <button class="btn btn-primary remove-from-shopping-list" productId="@Model.Product.Id">Убрать из корзины</button>
+            <button class="btn btn-primary add-to-shopping-list" productId="@Model.Product.Id" hidden>Добавить в корзину</button>
+         }
+         else
+         {
+            <button class="btn btn-primary remove-from-shopping-list" productId="@Model.Product.Id" hidden>Убрать из корзины</button>
+            <button class="btn btn-primary add-to-shopping-list" productId="@Model.Product.Id">Добавить в корзину</button>
+         }
+      </div>
+   </div>
+
+   <h2 class="text-center">Характеристики</h2>
+   <div class="container px-0 product-characteristics"></div>
+      <div class="row">
+         <div class="col">
+            <h3>Заводские данные</h3>
+         </div>
+         <div class="col-12 d-flex justify-content-between">
+            <span>Страна-производитель</span>
+            <span>@Model.Product.Country</span>
+         </div>
+      </div>
+
+      <div class="row">
+         <div class="col">
+            <h3>Общие параметры</h3>
+         </div>
+         <div class="col-12 d-flex justify-content-between">
+            <span>Модель</span>
+            <span>@Model.Product.Model</span>
+         </div>
+      </div>
+
+      <div class="row">
+         <div class="col">
+            <h3>Основные параметры</h3>
+         </div>
+         @if(Model is ViewCpuBindingModel cpuVm)
+         {
+            @Html.DisplayFor(model => cpuVm)
+         }
+         else if(Model is ViewGpuBindingModel gpuVm)
+         {
+            @Html.DisplayFor(model => gpuVm)
+         }
+         else if(Model is ViewRamBindingModel ramVm)
+         {
+            @Html.DisplayFor(model => ramVm)
+         }
+      </div>
+   </div>
+
+   <h2 class="text-center">Описание</h2>
+   <p>@Model.Product.Description</p>
+   <h2 class="text-center">Отзывы</h2>
+   <h3>Добавить новый отзыв</h3>
+   <div class="container-fluid px-0">
+      <form id="newFeedback" asp-action="AddNewFeedback" method="post">
+         <div id="rating">
+            <div class="rating__star" rating-value="5">★</div>
+            <div class="rating__star" rating-value="4">★</div>
+            <div class="rating__star" rating-value="3">★</div>
+            <div class="rating__star" rating-value="2">★</div>
+            <div class="rating__star" rating-value="1">★</div>
+         </div>
+         <div class="mb-3">
+            <label for="feedbackText" class="form-label">Текст отзыва</label>
+            <textarea id="feedbackText" class="form-control" rows="3"></textarea>
+         </div>
+         <input type="hidden" readonly id="productId" value="@Model.Product.Id">
+         <span class="text-danger" id="newFeedbackSubmitError"></span>
+         <span class="text-success" id="newFeedbackSubmitSucceed"></span>
+         <button type="submit">Отправить</button>
+      </form>
+   </div>
+</div>
+
+
+<script src="~/js/Home/ViewProduct.js"></script>
+<script src="~/js/Home/AddingAndRemovingFromBuyingList.js"></script>

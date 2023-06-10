@@ -1,0 +1,95 @@
+@model ShoppingCartBindingModel
+@{
+	ViewBag.Title = "Корзина";
+}
+@section Stylesheets {
+    <link rel="stylesheet" href="~/css/Home/UserShoppingList.css" asp-append-version="true" />
+}
+
+<div class="container h-100 py-5">
+<div class="row d-flex justify-content-center align-items-center h-100">
+<div class="col-10">
+   <div class="d-flex justify-content-between align-items-center mb-4">
+      <h3 class="fw-normal mb-0 text-black">Корзина</h3>
+   </div>
+
+   <form asp-action="ShoppingCart" method="post">
+      <div class="validation validation-summary-valid text-danger" asp-validation-summary="ModelOnly" data-valmsg-summary="true"></div>
+      <input hidden readonly asp-for="@Model.TotalPrice">
+   @if(Model.ShoppingItems.Count != 0)
+   {
+      for(int i = 0; i < Model.ShoppingItems.Count; i++)
+      {
+         <input hidden readonly asp-for="@Model.ShoppingItems[i].ProductId">
+         <input hidden readonly asp-for="@Model.ShoppingItems[i].ProductName">
+         <input hidden readonly asp-for="@Model.ShoppingItems[i].ProductPictureSrc">
+         <input hidden readonly asp-for="@Model.ShoppingItems[i].Price">
+         <div class="card rounded-3 mb-4">
+         <div class="card-body p-4">
+         <div class="row d-flex justify-content-between align-items-center shopping-item">
+            <div class="col-md-2 col-lg-2 col-xl-2">
+               <img src="~/Images/Products/@Model.ShoppingItems[i].ProductPictureSrc" class="img-fluid rounded-3" alt="Товар">
+            </div>
+            <div class="col-md-3 col-lg-3 col-xl-3">
+               <p class="lead fw-normal mb-2">@Model.ShoppingItems[i].ProductName</p>
+            </div>
+            <div class="col-md-3 col-lg-3 col-xl-2 d-flex">
+               <input class="form-control form-control-sm amount-of-product" min="0" asp-for="@Model.ShoppingItems[i].Amount" type="number"/>
+               <span asp-validation-for="@Model.ShoppingItems[i].Amount" class="text-danger"></span>
+            </div>
+            <div class="col-md-3 col-lg-2 col-xl-2 offset-lg-1 price-div">
+               <h5 class="mb-0 total-price-for-product" base-price="@Model.ShoppingItems[i].Price">@Model.ShoppingItems[i].Price руб.</h5>
+            </div>
+            <div class="col-md-1 col-lg-1 col-xl-1 text-end remove-product-from-cart" product-id="@Model.ShoppingItems[i].ProductId">
+               <span>❌</span>
+            </div>
+         </div>
+         </div>
+         </div>
+      }
+
+      <div class="card rounded-3 mb-4">
+      <div class="card-body p-4">
+      <div class="row d-flex justify-content-between align-items-center">
+         <div class="col-md-6">
+            <p class="lead fw-normal mb-2 text-center">Итоговая цена:</p>
+         </div>
+         <div class="col-md-6">
+            <p class="lead fw-normal mb-2 text-center" id="final-price">@Model.TotalPrice руб.</p>
+         </div>
+      </div>
+      </div>
+      </div>
+   }
+   else
+   {
+      <div class="card rounded-3 mb-4">
+      <div class="card-body p-4">
+      <div class="row d-flex justify-content-between align-items-center">
+         <div>
+            <p class="lead fw-normal mb-2">Товаров в корзине нет</p>
+         </div>
+      </div>
+      </div>
+      </div>
+   }
+
+      <div class="card">
+      <div class="card-body d-grid">
+         @if(Model.ShoppingItems.Count == 0)
+         {
+            <button type="submit" class="btn btn-warning btn-lg" disabled>Произвести покупку</button>
+         }
+         else
+         {
+            <button type="submit" class="btn btn-warning btn-lg">Произвести покупку</button>
+         }
+      </div>
+      </div>
+
+   </form>
+</div>
+</div>
+</div>
+
+<script src="~/js/Home/ShoppingCart.js"></script>

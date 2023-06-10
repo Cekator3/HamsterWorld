@@ -46,6 +46,14 @@ namespace HamsterWorld
                   x.User.HasClaim(ClaimTypes.Role, Role.ADMIN.ToString())
                );
             });
+            options.AddPolicy(name: Role.UserRoleName, policy =>
+            {
+               policy.RequireAssertion( x => 
+                  x.User.HasClaim(ClaimTypes.Role, Role.USER.ToString()) ||
+                  x.User.HasClaim(ClaimTypes.Role, Role.STORE_ADMIN.ToString()) ||
+                  x.User.HasClaim(ClaimTypes.Role, Role.ADMIN.ToString())
+               );
+            });
             options.AddPolicy(name: Role.BannedUserRoleName, policy =>
             {
                policy.RequireRole(Role.BANNED.ToString());

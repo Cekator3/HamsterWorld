@@ -45,7 +45,7 @@
                 <div class="product-info">
                     <span>
                         <mark>
-                            <a asp-action="ViewProduct" style="text-decoration: none;" asp-route-category=@ViewBag.Category asp-route-storeId=@ViewBag.StoreId asp-route-id=@product.Id>@product.ToString()</a>
+                            <a asp-action="ViewProduct" style="text-decoration: none;" asp-route-categoryId=@Model.Filter.filterType asp-route-productId=@product.Id>@product.ToString()</a>
                         </mark>
                     </span>
                 </div>
@@ -55,12 +55,23 @@
                     <span>@product.Price руб.</span>
                 </div>
                 <div class="mt-4">
-                    <button class="btn btn-primary">Купить</button>
+                    @if(Model.ProductsFromUsersShoppingList.Contains(product.Id))
+                    {
+                        <button class="btn btn-primary remove-from-shopping-list" productId="@product.Id">Убрать из корзины</button>
+                        <button class="btn btn-primary add-to-shopping-list" productId="@product.Id" hidden>Добавить в корзину</button>
+                    }
+                    else
+                    {
+                        <button class="btn btn-primary remove-from-shopping-list" productId="@product.Id" hidden>Убрать из корзины</button>
+                        <button class="btn btn-primary add-to-shopping-list" productId="@product.Id">Добавить в корзину</button>
+                    }
                 </div>
             </div>
             <div class="offset-sm-3">
-                <a class="link-primary" asp-action="ProductInStores" asp-route-categoryId="@Model.Filter.filterType" asp-route-productId="@product.Id">В магазинах</a>
+                <a class="link-primary" asp-action="ProductInStores" asp-route-productId="@product.Id">В магазинах</a>
             </div>
         </div>
     }
 </div>
+
+<script src="~/js/Home/AddingAndRemovingFromBuyingList.js"></script>
