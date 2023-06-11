@@ -35,6 +35,7 @@ public class HomeController : Controller
     {
         List<CatalogItem> catalogItems = new List<CatalogItem>();
 
+        //Load products and convert to binding model
         switch(filter.filterType)
         {
             case Product.Categorys.CPU:
@@ -330,16 +331,25 @@ public class HomeController : Controller
         return View(shoppingCart.FinalPrice);
     }
 
+    [HttpGet]
     [Authorize(Policy = Role.UserRoleName)]
-    public async Task<IActionResult> AddNewFeedback(ushort feedbackRating, string feedbackText, int productId)
+    public IActionResult AddNewFeedback(int productId)
     {
-        if(feedbackRating < 1 || feedbackRating > 5)
+        AddNewFeedbackBindingModel model = new AddNewFeedbackBindingModel()
         {
-            return BadRequest("Количество звёзд не может быть больше пяти");
-        }
-        if(string.IsNullOrWhiteSpace(feedbackText))
+            ProductId = productId
+        };
+
+        return View(model);
+    }
+
+    [Authorize(Policy = Role.UserRoleName)]
+    [HttpPost]
+    public async Task<IActionResult> AddNewFeedback(AddNewFeedbackBindingModel model)
+    {
+        if(string.IsNullOrWhiteSpace(model.FeedbackText))
         {
-            return BadRequest("Текст отзыва не содержит символов, либо содержит только пробелы");
+            ModelState.AddModelError(nameof(model.FeedbackText), "Текст отзыва не должен быть пустым");
         }
         
         int? userId = GetUserIdFromCookies(HttpContext);
@@ -348,24 +358,30 @@ public class HomeController : Controller
             return Forbid("В куках отсутствует индентификатор пользователя");
         }
 
-        if(await IsFeedbackToProductWithThisAuthorExist((int)userId, productId))
+        if(await IsProductExist(model.ProductId))
         {
-            return BadRequest("Вы уже писали отзыв на этот товар");
+            ModelState.AddModelError(nameof(model.FeedbackText), "Товара с таким Id не существует");
+        }
+
+        if(await IsFeedbackToProductWithThisAuthorExist((int)userId, model.ProductId))
+        {
+            ModelState.AddModelError(nameof(model.FeedbackText), "Вы уже писали отзыв для этого товара");
         }
 
         CommentToProduct feedback = new CommentToProduct()
         {
-            ProductId = productId,
+            ProductId = model.ProductId,
             AuthorId = userId,
-            Content = feedbackText,
+            Content = model.FeedbackText,
             WritingDate = DateTimeOffset.UtcNow,
-            AmountOfStars = feedbackRating
+            AmountOfStars = model.FeedbackRating
         };
 
         await _context.CommentsToProducts.AddAsync(feedback);
         await _context.SaveChangesAsync();
 
-        return Ok();
+
+        return RedirectToAction("ViewProduct", new { productId = model.ProductId });
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
@@ -710,5 +726,10 @@ public class HomeController : Controller
         return await _context.Assortments
                             .Where(e => productIds.Contains(e.ProductId))
                             .ToListAsync();
+    }
+
+    async Task<bool> IsProductExist(int productId)
+    {
+        return await _context.Products.AnyAsync(e => e.Id == productId);
     }
 }

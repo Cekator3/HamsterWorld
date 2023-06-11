@@ -1,0 +1,61 @@
+@model AddNewFeedbackBindingModel
+@section Stylesheets {
+   <link rel="stylesheet" href="~/css/Home/AddNewFeedback.css" asp-append-version="true" />
+}
+@{
+   ViewBag.Title = "Новый отзыв";
+}
+
+<h3>Добавить новый отзыв</h3>
+<div class="container rating">
+   <form asp-action="AddNewFeedback" method="post">
+      <div class="rating__items">
+         <div class="rating__item">
+            <label for="rating__1">1</label>
+            <input type="radio" asp-for="FeedbackRating" id="rating__1" value="1">
+         </div>
+         <div class="rating__item">
+            <label for="rating__2">2</label>
+            <input type="radio" asp-for="FeedbackRating" id="rating__2" value="2">
+         </div>
+         <div class="rating__item">
+            <label for="rating__3">3</label>
+            <input type="radio" asp-for="FeedbackRating" id="rating__3" value="3">
+         </div>
+         <div class="rating__item">
+            <label for="rating__4">4</label>
+            <input type="radio" asp-for="FeedbackRating" id="rating__4" value="4">
+         </div>
+         <div class="rating__item">
+            <label for="rating__5">5</label>
+            <input type="radio" asp-for="FeedbackRating" id="rating__5" value="5">
+         </div>
+         <div class="rating__item">
+            <label for="rating__6">6</label>
+            <input type="radio" asp-for="FeedbackRating" id="rating__6" value="6">
+         </div>
+         <div class="rating__item">
+            <label for="rating__7">7</label>
+            <input type="radio" asp-for="FeedbackRating" id="rating__7" value="7">
+         </div>
+         <div class="rating__item">
+            <label for="rating__8">8</label>
+            <input type="radio" asp-for="FeedbackRating" id="rating__8" value="8">
+         </div>
+         <div class="rating__item">
+            <label for="rating__9">9</label>
+            <input type="radio" asp-for="FeedbackRating" id="rating__9" value="9">
+         </div>
+         <div class="rating__item">
+            <label for="rating__10">10</label>
+            <input type="radio" asp-for="FeedbackRating" id="rating__10" value="10">
+         </div>
+      </div>
+      <div class="mb-3">
+         <label asp-for="FeedbackText" class="form-label">Текст отзыва</label>
+         <textarea asp-for="FeedbackText" class="form-control" rows="5"></textarea>
+      </div>
+      <input type="hidden" readonly asp-for="@Model.ProductId">
+      <button type="submit">Отправить</button>
+   </form>
+</div>

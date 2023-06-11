@@ -1,0 +1,15 @@
+.rating__items
+{
+   position: relative;
+   display: inline-flex;
+   gap: 0.5em;
+}
+
+.rating__item
+{
+   display:flex;
+   flex-direction: column;
+   justify-content: center;
+   align-items: center;
+}
+

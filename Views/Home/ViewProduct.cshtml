@@ -114,28 +114,5 @@
    <h2 class="text-center">Описание</h2>
    <p>@Model.Product.Description</p>
    <h2 class="text-center">Отзывы</h2>
-   <h3>Добавить новый отзыв</h3>
-   <div class="container-fluid px-0">
-      <form id="newFeedback" asp-action="AddNewFeedback" method="post">
-         <div id="rating">
-            <div class="rating__star" rating-value="5">★</div>
-            <div class="rating__star" rating-value="4">★</div>
-            <div class="rating__star" rating-value="3">★</div>
-            <div class="rating__star" rating-value="2">★</div>
-            <div class="rating__star" rating-value="1">★</div>
-         </div>
-         <div class="mb-3">
-            <label for="feedbackText" class="form-label">Текст отзыва</label>
-            <textarea id="feedbackText" class="form-control" rows="3"></textarea>
-         </div>
-         <input type="hidden" readonly id="productId" value="@Model.Product.Id">
-         <span class="text-danger" id="newFeedbackSubmitError"></span>
-         <span class="text-success" id="newFeedbackSubmitSucceed"></span>
-         <button type="submit">Отправить</button>
-      </form>
-   </div>
+   <a asp-action="AddNewFeedback" asp-route-productId="@Model.Product.Id">Добавить новый отзыв</a>
 </div>
-
-
-<script src="~/js/Home/ViewProduct.js"></script>
-<script src="~/js/Home/AddingAndRemovingFromBuyingList.js"></script>
