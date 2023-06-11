@@ -95,65 +95,56 @@ namespace HamsterWorld.Controllers
             return View("ManageProducts", viewModel);
         }
 
-        public async Task<IActionResult> ManageProduct(int? id, byte? category, short storeId)
+        public async Task<IActionResult> UpdateProduct(int productId, byte? category, short storeId)
         {
             if(category == null || !Enum.IsDefined(typeof(Product.Categorys), category))
             {
                 return NotFound("Такой категории не существует");
             }
 
-            ProductDetailsBindingModel? model = null;
-
-            //Если добавляется новый товар
-            if(id == null)
+            Product? product = await _context.Products.AsNoTracking()
+                                                    .Include(e => e.Pictures)
+                                                    .FirstOrDefaultAsync(e => e.Id == productId);
+            if(product == null)
             {
-                model = new ProductDetailsBindingModel()
-                {
-                    Id = -1,
-                    StoreId = storeId,
-                    Category = (byte)category
-                };
-
-                switch((byte)category)
-                {
-                    case (byte)Product.Categorys.CPU:
-                        model.CpuDetails = new CPUDetails();
-                        break;
-                    
-                    case (byte)Product.Categorys.GPU:
-                        model.GpuDetails = new GPUDetails();
-                        break;
-                    
-                    case (byte)Product.Categorys.RAM:
-                        model.RamDetails = new RAMDetails();
-                        break;
-                }
-
-                return View(model);
+                return NotFound("Товар с таким id не был обнаружен");
             }
 
-            //Если редактируется существующий
-            switch ((byte)category)
+            ProductDetailsBindingModel model = GetProductDetailsBmFromProduct(product, storeId, (byte)category);
+
+            return View("ManageProduct", model);
+        }
+
+        public IActionResult AddNewProduct(byte? category, short storeId)
+        {
+            if(category == null || !Enum.IsDefined(typeof(Product.Categorys), category))
+            {
+                return NotFound("Такой категории не существует");
+            }
+
+            ProductDetailsBindingModel model = new ProductDetailsBindingModel();
+
+            switch((byte)category)
             {
                 case (byte)Product.Categorys.CPU:
-                    model = await LoadProductDetailsIntoBindingModel(_context.CPUs, (int)id)!;
+                    model.CpuDetails = new CPUDetails();
                     break;
+                
                 case (byte)Product.Categorys.GPU:
-                    model = await LoadProductDetailsIntoBindingModel(_context.GPUs, (int)id)!;
+                    model.GpuDetails = new GPUDetails();
                     break;
+                
                 case (byte)Product.Categorys.RAM:
-                    model = await LoadProductDetailsIntoBindingModel(_context.RAMs, (int)id)!;
+                    model.RamDetails = new RAMDetails();
                     break;
-            }
-
-            if(model == null)
-            {
-                return NotFound("Товар не найден");
+                default:
+                    throw new NotImplementedException();
             }
 
             model.StoreId = storeId;
             model.Category = (byte)category;
-            return View(model);
+
+            return View("ManageProduct", model);
         }
 
         [HttpPost]
@@ -177,22 +168,13 @@ namespace HamsterWorld.Controllers
                 ModelState.AddModelError(nameof(productDetails.NewPhotos), Message);
             }
 
-            bool isProductExist = false;
-            if(productDetails.Id >= 0)
+            bool isProductExist = productDetails.Id != null && await IsProductExist((int)productDetails.Id);
+            if(isProductExist)
             {
-                if( !(await IsProductExist(productDetails.Id)) )
+                if(await IsProductModelNameHasDuplicates(productDetails.Model, (int)productDetails.Id!))
                 {
-                    ModelState.AddModelError(nameof(productDetails.Model), "Товара с таким Id не существует");
+                    ModelState.AddModelError(nameof(productDetails.Model), "Другая техника с таким же названием модели уже существует");
                 }
-                else
-                {
-                    isProductExist = true;
-                }
-            }
-
-            if(await IsProductModelNameHasDuplicates(productDetails.Model, productDetails.Id))
-            {
-                ModelState.AddModelError(nameof(productDetails.Model), "Другая техника с таким же названием модели уже существует");
             }
 
             if(!ModelState.IsValid)
@@ -205,36 +187,11 @@ namespace HamsterWorld.Controllers
 
             if(isProductExist)
             {
-                if(productDetails.CpuDetails != null)
-                {
-                    await SaveChangesToExistingProduct(_context.CPUs, productDetails, newPhotosFilesNames);
-                }
-                else if(productDetails.GpuDetails != null)
-                {
-                    await SaveChangesToExistingProduct(_context.GPUs, productDetails, newPhotosFilesNames);
-                }
-                else if(productDetails.RamDetails != null)
-                {
-                    await SaveChangesToExistingProduct(_context.RAMs, productDetails, newPhotosFilesNames);
-                }
+                await SaveChangesToExistingProduct(productDetails, newPhotosFilesNames);
             } 
             else
             {
-                if(productDetails.CpuDetails != null)
-                {
-                    CPU newCPUInfo = new CPU(); 
-                    await SaveNewProduct(newCPUInfo, productDetails, newPhotosFilesNames);
-                }
-                if(productDetails.GpuDetails != null)
-                {
-                    GPU newGPUInfo = new GPU(); 
-                    await SaveNewProduct(newGPUInfo, productDetails, newPhotosFilesNames);
-                }
-                if(productDetails.RamDetails != null)
-                {
-                    RAM newRAMInfo = new RAM(); 
-                    await SaveNewProduct(newRAMInfo, productDetails, newPhotosFilesNames);
-                }
+                await SaveNewProduct(productDetails, newPhotosFilesNames);
             }
 
             return RedirectToAction("ManageProducts", new { storeId = productDetails.StoreId, category = productDetails.Category});
@@ -262,14 +219,15 @@ namespace HamsterWorld.Controllers
                 return Unauthorized("Вы не являетесь администратором этого магазина");
             }
 
-            Assortment? assortment=  await _context.Assortments.FindAsync(storeId, productId);
+            Assortment? assortment = await _context.Assortments.FindAsync(storeId, productId);
             if(assortment == null)
             {
-                return NotFound("Товара с таким Id не было найдено");
+                return NotFound("Товар с таким Id не найден");
             }
 
             assortment.Amount = (int)amount;
             await _context.SaveChangesAsync();
+
             return Ok();
         }
 
@@ -398,46 +356,31 @@ namespace HamsterWorld.Controllers
             }
         }
 
-        public List<ProductAmountBindingModel> ConvertStoreToCPUBindingModelList(Store store)
+        List<ProductAmountBindingModel> ConvertStoreToCPUBindingModelList(Store store)
         {
-            List<CPUAmountBindingModel> models = new List<CPUAmountBindingModel>();
-
-            foreach(CPU cpu in store.CPUs!)
-            {
-                CPUAmountBindingModel model = new CPUAmountBindingModel(cpu);
-
-                models.Add(model);
-            }
+            List<CPUAmountBindingModel> models = store.CPUs!
+                                                    .Select(cpu => new CPUAmountBindingModel(cpu))
+                                                    .ToList();
 
             return models.Cast<ProductAmountBindingModel>().ToList();
         }
 
-        public List<ProductAmountBindingModel> ConvertStoreToGPUBindingModelList(Store store)
+        List<ProductAmountBindingModel> ConvertStoreToGPUBindingModelList(Store store)
         {
             //Почти полное повторение ConvertStoreToCPUBindingModelList
-            List<GPUAmountBindingModel> models = new List<GPUAmountBindingModel>();
-
-            foreach(GPU gpu in store.GPUs!)
-            {
-                GPUAmountBindingModel model = new GPUAmountBindingModel(gpu);
-
-                models.Add(model);
-            }
+            List<GPUAmountBindingModel> models = store.GPUs!
+                                                    .Select(gpu => new GPUAmountBindingModel(gpu))
+                                                    .ToList();
 
             return models.Cast<ProductAmountBindingModel>().ToList();
         }
 
-        public List<ProductAmountBindingModel> ConvertStoreToRAMBindingModelList(Store store)
+        List<ProductAmountBindingModel> ConvertStoreToRAMBindingModelList(Store store)
         {
             //Почти полное повторение ConvertStoreToCPUBindingModelList
-            List<RAMAmountBindingModel> models = new List<RAMAmountBindingModel>();
-
-            foreach(RAM ram in store.RAMs!)
-            {
-                RAMAmountBindingModel model = new RAMAmountBindingModel(ram);
-
-                models.Add(model);
-            }
+            List<RAMAmountBindingModel> models = store.RAMs!
+                                                    .Select(ram => new RAMAmountBindingModel(ram))
+                                                    .ToList();
 
             return models.Cast<ProductAmountBindingModel>().ToList();
         }
@@ -461,31 +404,31 @@ namespace HamsterWorld.Controllers
             return int.Parse(userId);
         }
 
-        public async Task<ProductDetailsBindingModel>? LoadProductDetailsIntoBindingModel<T>(DbSet<T> entities, int productId) where T: Product
+        ProductDetailsBindingModel GetProductDetailsBmFromProduct(Product product, int storeId, byte category)
         {
-            T? product = await entities.AsNoTracking()
-                                    .Include(cpu => cpu.Pictures)
-                                    .FirstOrDefaultAsync(e => e.Id == productId);
-
-            if(product == null)
-            {
-                return null!;
-            }
+            ProductDetailsBindingModel model = null!;
 
             if(product is CPU cpu)
             {
-                return new ProductDetailsBindingModel(cpu);
+                model = new ProductDetailsBindingModel(cpu);
             }
-            if(product is GPU gpu)
+            else if(product is GPU gpu)
             {
-                return new ProductDetailsBindingModel(gpu);
+                model = new ProductDetailsBindingModel(gpu);
             }
-            if(product is RAM ram)
+            else if(product is RAM ram)
             {
-                return new ProductDetailsBindingModel(ram);
+                model = new ProductDetailsBindingModel(ram);
+            }
+            else
+            {
+                throw new NotImplementedException();
             }
 
-            return null!;
+            model.StoreId = storeId;
+            model.Category = category;
+
+            return model;
         }
 
         async Task<bool> IsCountryExist(string code)
@@ -524,16 +467,7 @@ namespace HamsterWorld.Controllers
         async Task<bool> IsProductModelNameHasDuplicates(string modelName, int productId)
         {
             return await _context.Products
-                                .Where(prod => (prod.Id != productId) && (prod.Model == modelName))
-                                .FirstOrDefaultAsync() 
-                                != null;
-        }
-        async Task<bool> IsProductModelNameHasDuplicates(string modelName)
-        {
-            return await _context.Products
-                                .Where(prod => prod.Model == modelName)
-                                .FirstOrDefaultAsync() 
-                                != null;
+                                .AnyAsync(prod => (prod.Id != productId) && (prod.Model == modelName));
         }
         
         async Task<List<string>> SaveNewPhotosToImageDirectory(ProductDetailsBindingModel model)
@@ -566,11 +500,11 @@ namespace HamsterWorld.Controllers
             return picturesFileNames;
         }
 
-        public async Task SaveChangesToExistingProduct<T>(DbSet<T> entities, ProductDetailsBindingModel productDetails, List<string> newPhotosFilesNames) where T: Product
+        async Task SaveChangesToExistingProduct(ProductDetailsBindingModel productDetails, List<string> newPhotosFilesNames)
         {
-            T oldProductInfo = (await entities
-                                        .Include(product => product.Pictures)
-                                        .FirstOrDefaultAsync(product => product.Id == productDetails.Id))!;
+            Product oldProductInfo = (await _context.Products
+                                                    .Include(product => product.Pictures)
+                                                    .FirstOrDefaultAsync(product => product.Id == productDetails.Id))!;
             
             ApplyNewCharacteristicInfoToProduct(oldProductInfo, productDetails);
 
@@ -579,34 +513,46 @@ namespace HamsterWorld.Controllers
             await _context.SaveChangesAsync();
         }
 
-        public async Task SaveNewProduct<T>(T product, ProductDetailsBindingModel productDetails, List<string> newPhotosFilesNames) where T: Product
+        async Task SaveNewProduct(ProductDetailsBindingModel productInfo, List<string> newPhotosFilesNames)
         {
-            ApplyNewCharacteristicInfoToProduct(product, productDetails);
+            Product product = null!;
+
+            if(productInfo.CpuDetails != null)
+            {
+                product = new CPU();
+            }
+            else if(productInfo.GpuDetails != null)
+            {
+                product = new GPU();
+            }
+            else if(productInfo.RamDetails != null)
+            {
+                product = new RAM();
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
+
+            await SaveNewProduct(product, productInfo, newPhotosFilesNames);
+        }
+
+        async Task SaveNewProduct(Product product, ProductDetailsBindingModel productInfo, List<string> newPhotosFilesNames)
+        {
+            ApplyNewCharacteristicInfoToProduct(product, productInfo);
 
             product.Pictures = new List<ProductPicture>();
             PutNewImagesIntoProductInfo(product, newPhotosFilesNames);
 
-            if(product is CPU cpu)
-            {
-                await DbUsageTools.TryAddNewProductToDatabase(_context, cpu);
-            }
-            else if(product is GPU gpu)
-            {
-                await DbUsageTools.TryAddNewProductToDatabase(_context, gpu);
-            }
-            else if(product is RAM ram)
-            {
-                await DbUsageTools.TryAddNewProductToDatabase(_context, ram);
-            }
+            await DbUsageTools.TryAddNewProductToDatabase(_context, product);
         }
 
-        public void PutNewImagesIntoProductInfo(Product product, List<string> newPhotosFilesNames)
+        void PutNewImagesIntoProductInfo(Product product, List<string> newPhotosFilesNames)
         {
             ushort lastPictureOrderNumber = 1;
-
             if(product.Pictures!.Count != 0)
             {
-                lastPictureOrderNumber = (ushort)(product.Pictures.Max(e => e.OrderNumber) + 1);
+                lastPictureOrderNumber = (ushort)(product.Pictures!.Max(e => e.OrderNumber) + 1);
             }
 
             foreach(string fileName in newPhotosFilesNames)
@@ -622,36 +568,38 @@ namespace HamsterWorld.Controllers
             }
         }
 
-        public Product ApplyNewCharacteristicInfoToProduct(Product oldProductInfo, ProductDetailsBindingModel newProductInfo)
+        Product ApplyNewCharacteristicInfoToProduct(Product oldProductInfo, ProductDetailsBindingModel newProductInfo)
         {
             oldProductInfo.Country = newProductInfo.Country;
             oldProductInfo.Model = newProductInfo.Model;
             oldProductInfo.Description = newProductInfo.Description;
             oldProductInfo.Price = newProductInfo.Price;
 
-            if(oldProductInfo is CPU cpu)
+            if(oldProductInfo is CPU cpu && newProductInfo.CpuDetails != null)
             {
-                cpu.ClockRate = newProductInfo.CpuDetails!.ClockRate;
+                cpu.ClockRate = newProductInfo.CpuDetails.ClockRate;
                 cpu.NumberOfCores = newProductInfo.CpuDetails.NumberOfCores;
                 cpu.Socket = newProductInfo.CpuDetails.Socket;
             }
-            else if(oldProductInfo is GPU gpu)
+            else if(oldProductInfo is GPU gpu && newProductInfo.GpuDetails != null)
             {
-                gpu.VRAM = newProductInfo.GpuDetails!.VRAM;
+                gpu.VRAM = newProductInfo.GpuDetails.VRAM;
                 gpu.MemoryType = newProductInfo.GpuDetails.MemoryType;
             }
-            else if(oldProductInfo is RAM ram)
+            else if(oldProductInfo is RAM ram && newProductInfo.RamDetails != null)
             {
-                ram.AmountOfMemory = newProductInfo.RamDetails!.AmountOfMemory;
+                ram.AmountOfMemory = newProductInfo.RamDetails.AmountOfMemory;
                 ram.MemoryType = newProductInfo.RamDetails.MemoryType;
+            }
+            else
+            {
+                throw new NotImplementedException();
             }
 
             return oldProductInfo;
         }
 
-
-
-        public void DeleteProductPicturesFromFileSystem(List<string> fileNames)
+        void DeleteProductPicturesFromFileSystem(List<string> fileNames)
         {
             string pathToProductsPictures = Path.Combine(_env.ContentRootPath, "wwwroot/Images/Products/");
             if( !Directory.Exists(pathToProductsPictures) )

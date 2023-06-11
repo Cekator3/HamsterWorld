@@ -8,7 +8,7 @@ namespace HamsterWorld.Models
 		public int StoreId { get; set; }
 		public byte Category { get; set; }
 		//Id существующего типа товара
-		public int Id { get; set; } = -1;
+		public int? Id { get; set; } = null;
 		[Required(ErrorMessage = "Введите страну производителя")]
 		public string Country { get; set; } = "";
 		[Required(ErrorMessage = "Введите название модели")]

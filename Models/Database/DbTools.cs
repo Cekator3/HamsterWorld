@@ -5,50 +5,40 @@ namespace HamsterWorld.DatabaseUtilities
 {
 	public static class DbUsageTools
 	{
-		public static async Task<(bool, string)> TryAddNewProductToDatabase(ApplicationContext context, CPU cpu)
+		public static async Task<(bool, string)> TryAddNewProductToDatabase<T>(ApplicationContext context, T product) where T: Product
 		{
-			if(await context.CPUs.AnyAsync(e => e.Model == cpu.Model))
+			if(product is CPU cpu)
 			{
-				return (false, "Процессор с такой же моделью уже существует");
+				return await TryAddNewProductToDatabase(context.CPUs, context, cpu);
+			}
+			if(product is GPU gpu)
+			{
+				return await TryAddNewProductToDatabase(context.GPUs, context, gpu);
+			}
+			if(product is RAM ram)
+			{
+				return await TryAddNewProductToDatabase(context.RAMs, context, ram);
 			}
 
-			await context.CPUs.AddAsync(cpu);
+			throw new NotImplementedException();
+		}
+		public static async Task<(bool, string)> TryAddNewProductToDatabase<T>(DbSet<T> dbSet, ApplicationContext context, T product) where T: Product
+		{
+			if(await dbSet.AnyAsync(e => e.Model == product.Model))
+			{
+				return (false, "Товар с такой же моделью уже существует");
+			}
+
+			await dbSet.AddAsync(product);
 
 			//Saving changes to aquire id of added cpu
 			await context.SaveChangesAsync();
 
-			await AddMissingProductToAssortmentTable(context, cpu.Id);
+			await AddMissingProductToAssortmentTable(context, product.Id);
 
 			return (true, "");
 		}
 
-		public static async Task<(bool, string)> TryAddNewProductToDatabase(ApplicationContext context, GPU gpu)
-		{
-			//Почти точное повторение кода из первого метода
-			if(await context.GPUs.AnyAsync(e => e.Model == gpu.Model))
-			{
-				return (false, "Видеокарта с такой же моделью уже существует");
-			}
-
-			await context.GPUs.AddAsync(gpu);
-			await context.SaveChangesAsync();
-			await AddMissingProductToAssortmentTable(context, gpu.Id);
-			return (true, "");
-		}
-
-		public static async Task<(bool, string)> TryAddNewProductToDatabase(ApplicationContext context, RAM ram)
-		{
-			//Почти точное повторение кода из первого метода
-			if(await context.RAMs.AnyAsync(e => e.Model == ram.Model))
-			{
-				return (false, "Оперативная память с такой же моделью уже существует");
-			}
-
-			await context.RAMs.AddAsync(ram);
-			await context.SaveChangesAsync();
-			await AddMissingProductToAssortmentTable(context, ram.Id);
-			return (true, "");
-		}
 		public async static Task RemoveProductFromDatabase(ApplicationContext context, int productId)
 		{
 			Product? product = await context.Products.FindAsync(productId);

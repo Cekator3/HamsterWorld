@@ -1,0 +1,14 @@
+@model ViewGpuBindingModel
+@{
+   GPU gpu = (GPU)Model.Product;
+}
+
+<div class="col-12 d-flex justify-content-between">
+   <span>Тип видеопамяти</span>
+   <span>@gpu.MemoryType</span>
+</div>
+
+<div class="col-12 d-flex justify-content-between">
+   <span>Количество видеопамяти</span>
+   <span>@gpu.VRAM</span>
+</div>

@@ -32,7 +32,7 @@
                 <div class="product-info">
                     <p>
                         <mark>
-                            <a asp-action="ManageProduct" style="text-decoration: none;" asp-route-category=@ViewBag.Category asp-route-storeId=@ViewBag.StoreId asp-route-id=@product.Id>@product.ToString()</a>
+                            <a asp-action="UpdateProduct" style="text-decoration: none;" asp-route-category=@ViewBag.Category asp-route-storeId=@ViewBag.StoreId asp-route-productId=@product.Id>@product.ToString()</a>
                         </mark>
                     </p>
                 </div>
@@ -52,7 +52,7 @@
     <div class="row" id="addNew">
         <div class="col-12">
             <div class="border">
-                <a asp-action="ManageProduct" asp-route-category=@ViewBag.Category asp-route-storeId=@ViewBag.StoreId>+</a>
+                <a asp-action="AddNewProduct" asp-route-category=@ViewBag.Category asp-route-storeId=@ViewBag.StoreId>+</a>
             </div>
         </div>
     </div>

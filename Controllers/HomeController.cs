@@ -110,46 +110,18 @@ public class HomeController : Controller
         return Content(imgSrc);
     }
 
-    public async Task<IActionResult> ViewProduct(int productId, byte categoryId)
+    public async Task<IActionResult> ViewProduct(int productId)
     {
-        Product.Categorys category = (Product.Categorys)categoryId;
+        Product? product = await _context.Products.FindAsync(productId);
 
-        ViewProductBindingModel? bindingModel = null;
-
-        switch(category)
+        if(product == null)
         {
-            case Product.Categorys.CPU:
-                CPU? cpu = await LoadProductDetails(_context.CPUs, productId);
-
-                if(cpu != null)
-                    bindingModel = new ViewCpuBindingModel(cpu);
-                break;
-
-            case Product.Categorys.GPU:
-                GPU? gpu = await LoadProductDetails(_context.GPUs, productId);
-
-                if(gpu != null)
-                    bindingModel = new ViewGpuBindingModel(gpu);
-                break;
-
-            case Product.Categorys.RAM:
-                RAM? ram = await LoadProductDetails(_context.RAMs, productId);
-
-                if(ram != null)
-                    bindingModel = new ViewRamBindingModel(ram);
-                break;
-
-            default:
-                return NotFound("Такой категории не существует");
+            return NotFound("Товар с таким Id был не найден");
         }
 
-        bool productNotFound = bindingModel == null;
-        if(productNotFound)
-        {
-            return NotFound("Товар с таким Id и с такой категорией был не найден");
-        }
+        await LoadProductDetails(product);
 
-        bindingModel!.AverageMark = await GetAverageMarkOfProduct(productId);
+        ViewProductBindingModel bindingModel = await ConvertProductToViewProductBindingModel(product);
 
         int? userId = GetUserIdFromCookies(HttpContext);
         if(userId != null)
@@ -349,7 +321,7 @@ public class HomeController : Controller
     {
         if(string.IsNullOrWhiteSpace(model.FeedbackText))
         {
-            ModelState.AddModelError(nameof(model.FeedbackText), "Текст отзыва не должен быть пустым");
+            ModelState.AddModelError("", "Текст отзыва не должен быть пустым");
         }
         
         int? userId = GetUserIdFromCookies(HttpContext);
@@ -358,14 +330,19 @@ public class HomeController : Controller
             return Forbid("В куках отсутствует индентификатор пользователя");
         }
 
-        if(await IsProductExist(model.ProductId))
+        if(!(await IsProductExist(model.ProductId)))
         {
-            ModelState.AddModelError(nameof(model.FeedbackText), "Товара с таким Id не существует");
+            ModelState.AddModelError("", "Товара с таким Id не существует");
         }
 
         if(await IsFeedbackToProductWithThisAuthorExist((int)userId, model.ProductId))
         {
-            ModelState.AddModelError(nameof(model.FeedbackText), "Вы уже писали отзыв для этого товара");
+            ModelState.AddModelError("", "Вы уже писали отзыв для этого товара");
+        }
+
+        if(!ModelState.IsValid)
+        {
+            return View(model);
         }
 
         CommentToProduct feedback = new CommentToProduct()
@@ -529,24 +506,48 @@ public class HomeController : Controller
         }
     }
 
-    public async Task<T?> LoadProductDetails<T>(DbSet<T> dbSet, int productId) where T:Product
+    async Task LoadProductDetails(Product product)
     {
-        return await dbSet.AsNoTracking()
-                        .Include(cpu => cpu.Pictures)
-                        .Include(cpu => cpu.Comments)
-                            !.ThenInclude(e => e.ChildrenComments)
-                        .AsSplitQuery()
-                        .FirstOrDefaultAsync(cpu => cpu.Id == productId);
+        await _context.Entry(product)
+                        .Collection(e => e.Pictures!)
+                        .LoadAsync();
+
+        await _context.Entry(product)
+                        .Collection(e => e.Comments!)
+                        .Query()
+                        .Include(e => e.ChildrenComments)
+                        .LoadAsync();
     }
 
-    public async Task<double> GetAverageMarkOfProduct(int productId)
+    async Task<ViewProductBindingModel> ConvertProductToViewProductBindingModel(Product product)
+    {
+        ViewProductBindingModel model = null!;
+        if(product is CPU cpu)
+        {
+            model = new ViewCpuBindingModel(cpu);
+        }
+        if(product is GPU gpu)
+        {
+            model = new ViewGpuBindingModel(gpu);
+        }
+        if(product is RAM ram)
+        {
+            model = new ViewRamBindingModel(ram);
+        }
+
+        model.AverageMark = await GetAverageMarkOfProduct(product.Id);
+
+        return model;
+    }
+
+    async Task<double> GetAverageMarkOfProduct(int productId)
     {
         return await _context.CommentsToProducts
                             .Where(e => e.ProductId == productId)
                             .AverageAsync(e => (double?)e.AmountOfStars) ?? 0.0;
     }
 
-    public int? GetUserIdFromCookies(HttpContext context)
+    int? GetUserIdFromCookies(HttpContext context)
     {
         string? userId = HttpContext.User.Claims
                                         .FirstOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier)
@@ -560,13 +561,13 @@ public class HomeController : Controller
         return result;
     }
 
-    public async Task<bool> IsFeedbackToProductWithThisAuthorExist(int authorId, int productId)
+    async Task<bool> IsFeedbackToProductWithThisAuthorExist(int authorId, int productId)
     {
         return await _context.CommentsToProducts
                                 .AnyAsync(feedback => feedback.AuthorId == authorId && feedback.ProductId == productId );
     }
 
-    public async Task<List<int>> GetUsersBuyingsIdList(int userId)
+    async Task<List<int>> GetUsersBuyingsIdList(int userId)
     {
         return (await _context.ShoppingLists.AsNoTracking()
                             .Include(e => e.Buyings)
@@ -578,17 +579,17 @@ public class HomeController : Controller
                             ?? new List<int>();
     }
 
-    public async Task<bool> CheckIfProductIsInUsersBuyingsList(int userId, int productId)
+    async Task<bool> CheckIfProductIsInUsersBuyingsList(int userId, int productId)
     {
         return (await GetUsersBuyingsIdList(userId)).Contains(productId);
     }
 
-    public bool CheckIfProductIsInUserShoppingList(ShoppingList userShoppingList, int productId)
+    bool CheckIfProductIsInUserShoppingList(ShoppingList userShoppingList, int productId)
     {
         return userShoppingList.Buyings!.Any(e => e.ProductId == productId);
     }
 
-    public async Task<ShoppingList?> GetUserCurrentShoppingList(int userId)
+    async Task<ShoppingList?> GetUserCurrentShoppingList(int userId)
     {
         //Если у корзины определён TimeOfSale, то эта корзина старая: пользователь её оплачивал
         return await _context.ShoppingLists
@@ -596,7 +597,7 @@ public class HomeController : Controller
                             .FirstOrDefaultAsync(e => e.UserId == (int)userId && e.TimeOfSale == null);
     }
 
-    public async Task<ShoppingList> CreateUserShoppingList(int userId)
+    async Task<ShoppingList> CreateUserShoppingList(int userId)
     {
         ShoppingList userShoppingList = new ShoppingList()
         {
@@ -611,7 +612,7 @@ public class HomeController : Controller
         return userShoppingList;
     }
 
-    public async Task AddNewProductToUserShoppingList(ShoppingList userShoppingList, int productId)
+    async Task AddNewProductToUserShoppingList(ShoppingList userShoppingList, int productId)
     {
         //add new product to user's shopping list
         ItemOfShoppingList item = new ItemOfShoppingList()
@@ -625,7 +626,7 @@ public class HomeController : Controller
         await _context.SaveChangesAsync();
     }
 
-    public async Task RemoveProductFromUserShoppingList(ShoppingList userShoppingList, int productId)
+    async Task RemoveProductFromUserShoppingList(ShoppingList userShoppingList, int productId)
     {
         ItemOfShoppingList? productToRemove = userShoppingList.Buyings!.FirstOrDefault(e => e.ProductId == productId);
 
@@ -636,7 +637,7 @@ public class HomeController : Controller
         }
     }
 
-    public async Task<ShoppingList?> GetUserCurrentShoppingListWithProductDetailsLoaded(int userId)
+    async Task<ShoppingList?> GetUserCurrentShoppingListWithProductDetailsLoaded(int userId)
     {
         //TODO вообще не уверен, что это эффективно. Следует зарефакторить
         //Загружаем все необходимые данные
@@ -664,7 +665,7 @@ public class HomeController : Controller
         return shoppingCart;
     }
 
-    public ShoppingCartBindingModel GenerateShoppingCartBindingModel(ShoppingList shoppingCart)
+    ShoppingCartBindingModel GenerateShoppingCartBindingModel(ShoppingList shoppingCart)
     {
         List<ShoppingItem> items = shoppingCart.Buyings!.Select(e => new ShoppingItem()
         {
@@ -686,7 +687,7 @@ public class HomeController : Controller
         return model;
     }
 
-    public async Task<int> GetRemainingAmountOfProductInStores(int productId)
+    async Task<int> GetRemainingAmountOfProductInStores(int productId)
     {
         return await _context.Assortments
                                 .Where(e => e.ProductId == productId)

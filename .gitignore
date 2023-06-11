@@ -28,3 +28,4 @@ msbuild.err
 msbuild.wrn
 
 .vscode
+/wwwroot/Images/Products

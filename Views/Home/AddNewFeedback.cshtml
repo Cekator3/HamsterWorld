@@ -9,6 +9,7 @@
 <h3>Добавить новый отзыв</h3>
 <div class="container rating">
    <form asp-action="AddNewFeedback" method="post">
+      <div class="validation validation-summary-valid text-danger" asp-validation-summary="ModelOnly" data-valmsg-summary="true"></div>
       <div class="rating__items">
          <div class="rating__item">
             <label for="rating__1">1</label>
