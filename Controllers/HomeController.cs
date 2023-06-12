@@ -20,12 +20,12 @@ public class HomeController : Controller
         _config = config;
     }
 
-    public IActionResult Index()
+    public async Task<IActionResult> Index()
     {
         var model = new HamsterWorldInfoBindingModel()
         {
-            StoresAmount = _context.Stores.Count(),
-            EmployeesAmount = _context.Users.Count(user => user.RoleId == Role.STORE_ADMIN)
+            StoresAmount = await _context.Stores.CountAsync(),
+            EmployeesAmount = await _context.Users.CountAsync(user => user.RoleId == Role.STORE_ADMIN)
         };
 
         return View(model);
@@ -266,11 +266,7 @@ public class HomeController : Controller
     public async Task<IActionResult> Checkout(int shoppingListId)
     {
         //Это действие - Эмуляция покупки
-        int? userId = GetUserIdFromCookies(HttpContext);
-        if(userId == null)
-        {
-            return Forbid("В куках отсутствует индентификатор пользователя");
-        }
+        int userId = (int)GetUserIdFromCookies(HttpContext)!;
 
         ShoppingList? shoppingCart = await GetUserCurrentShoppingListWithProductDetailsLoaded((int)userId);
 
@@ -324,11 +320,7 @@ public class HomeController : Controller
             ModelState.AddModelError("", "Текст отзыва не должен быть пустым");
         }
         
-        int? userId = GetUserIdFromCookies(HttpContext);
-        if(userId == null)
-        {
-            return Forbid("В куках отсутствует индентификатор пользователя");
-        }
+        int userId = (int)GetUserIdFromCookies(HttpContext)!;
 
         if(!(await IsProductExist(model.ProductId)))
         {

@@ -111,17 +111,19 @@ namespace HamsterWorld.Controllers
 			{
 				ModelState.AddModelError(nameof(model.Password), "Неверный пароль");
 			}
-			if (ModelState.IsValid)
+			if (!ModelState.IsValid)
 			{
-				await SendAuthCookiesToUser(user!);
-				if(string.IsNullOrEmpty(model.ReturnUrl))
-				{
-					return Redirect("/");
-				}
+				return View(model);
+			}
+
+			await SendAuthCookiesToUser(user!);
+
+			if(!string.IsNullOrEmpty(model.ReturnUrl))
+			{
 				return Redirect(model.ReturnUrl);
 			}
 
-			return View(model);
+			return Redirect("/");
 		}
 
 		public async Task<IActionResult> Logout()

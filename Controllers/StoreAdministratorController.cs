@@ -27,18 +27,7 @@ namespace HamsterWorld.Controllers
             //getting user's id from auth cookies
             int userId = GetCurrentUserIdFromAuthCookie();
 
-            //getting user from database
-            var user = await _context.Users.AsNoTracking()
-                                            .Include(e => e.AdministratingStores)
-                                            .Select(e => new {e.Id, e.AdministratingStores})
-                                            .FirstOrDefaultAsync(e => e.Id == userId);
-            if(user == null)
-            {
-                return BadRequest("У вас испорченные куки");
-            }
-
-            //getting all stores that are administrered by this user
-            List<Store> stores = user.AdministratingStores!;
+            List<Store> stores = await GetStoresAdministratedByUser(userId);
 
             return View(stores);
         }
@@ -63,7 +52,7 @@ namespace HamsterWorld.Controllers
 
             if( !(await IsUserAdminOfStore(store)))
             {
-                return Unauthorized();
+                return Unauthorized("Вы не являетесь администратором этого магазина");
             }
 
 
@@ -97,7 +86,7 @@ namespace HamsterWorld.Controllers
 
         public async Task<IActionResult> UpdateProduct(int productId, byte? category, short storeId)
         {
-            if(category == null || !Enum.IsDefined(typeof(Product.Categorys), category))
+            if(!IsCategoryExist(category))
             {
                 return NotFound("Такой категории не существует");
             }
@@ -110,14 +99,14 @@ namespace HamsterWorld.Controllers
                 return NotFound("Товар с таким id не был обнаружен");
             }
 
-            ProductDetailsBindingModel model = GetProductDetailsBindingModelFromProduct(product, storeId, (byte)category);
+            ProductDetailsBindingModel model = GetProductDetailsBindingModelFromProduct(product, storeId, (byte)category!);
 
             return View("ManageProduct", model);
         }
 
         public IActionResult AddNewProduct(byte? category, short storeId)
         {
-            if(category == null || !Enum.IsDefined(typeof(Product.Categorys), category))
+            if(!IsCategoryExist(category))
             {
                 return NotFound("Такой категории не существует");
             }
@@ -297,11 +286,23 @@ namespace HamsterWorld.Controllers
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
 
+        async Task<List<Store>> GetStoresAdministratedByUser(int userId)
+        {
+            return (await _context.Users.AsNoTracking()
+                                        .Include(e => e.AdministratingStores)
+                                        .Select(e => new {e.Id, e.AdministratingStores})
+                                        .FirstAsync(e => e.Id == userId))
+                                        .AdministratingStores!;
+        }
 
+        bool IsCategoryExist(byte? category)
+        {
+            return category != null && Enum.IsDefined(typeof(Product.Categorys), category);
+        }
 
         async Task LoadCPUsDetailsToStoreEntity(string searchFilter, Store store)
         {
-            //Чтобы подгрузить товары, ef core автоматически подгружает промежуточную таблицу assortments,
+            //Чтобы подгрузить товары (CPUs), ef core автоматически подгружает промежуточную таблицу assortments,
             //Поэтому её подгружать отдельно нет смысла
             await _context.Entry(store)
                         .Collection(s => s.CPUs!)
