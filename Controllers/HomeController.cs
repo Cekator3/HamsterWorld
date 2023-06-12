@@ -178,11 +178,7 @@ public class HomeController : Controller
     [Authorize]
     public async Task<IActionResult> ShoppingCart()
     {
-        int? userId = GetUserIdFromCookies(HttpContext);
-        if(userId == null)
-        {
-            return Forbid("В куках отсутствует индентификатор пользователя");
-        }
+        int userId = (int)GetUserIdFromCookies(HttpContext)!;
 
         //get user's current shopping list with its items
         ShoppingList? shoppingCart = await GetUserCurrentShoppingListWithProductDetailsLoaded((int)userId);
@@ -206,11 +202,7 @@ public class HomeController : Controller
             return BadRequest();
         }
 
-        int? userId = GetUserIdFromCookies(HttpContext);
-        if(userId == null)
-        {
-            return Forbid("В куках отсутствует индентификатор пользователя");
-        }
+        int? userId = (int)GetUserIdFromCookies(HttpContext)!;
 
         //Obtain items from db 
         ShoppingList? shoppingCart = await GetUserCurrentShoppingListWithProductDetailsLoaded((int)userId);
@@ -516,15 +508,19 @@ public class HomeController : Controller
         ViewProductBindingModel model = null!;
         if(product is CPU cpu)
         {
-            model = new ViewCpuBindingModel(cpu);
+            model = new ViewProductBindingModel(cpu);
         }
-        if(product is GPU gpu)
+        else if(product is GPU gpu)
         {
-            model = new ViewGpuBindingModel(gpu);
+            model = new ViewProductBindingModel(gpu);
         }
-        if(product is RAM ram)
+        else if(product is RAM ram)
         {
-            model = new ViewRamBindingModel(ram);
+            model = new ViewProductBindingModel(ram);
+        }
+        else
+        {
+            throw new NotImplementedException();
         }
 
         model.AverageMark = await GetAverageMarkOfProduct(product.Id);
@@ -662,7 +658,7 @@ public class HomeController : Controller
         List<ShoppingItem> items = shoppingCart.Buyings!.Select(e => new ShoppingItem()
         {
             ProductId = e.ProductId,
-            ProductName = e.Product.Model,
+            ProductName = e.Product.ToString()!,
             ProductPictureSrc = e.Product.Pictures!.First().FileName,
             Amount = e.Amount,
             Price = e.Product.Price

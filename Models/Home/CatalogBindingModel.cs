@@ -11,7 +11,7 @@ namespace HamsterWorld.Models
 	{
 		public int Id { get; set; }
 		public string? PictureSrc { get; set; } = "";
-		public string Model { get; set; } = "";
+		public string ProductName { get; set; } = "";
 		public decimal Price { get; set; } = 0;
 
 		protected CatalogItem(){}
@@ -19,7 +19,7 @@ namespace HamsterWorld.Models
 		{
 			Id = product.Id;
 			PictureSrc = $"{ProductPicture.PATH}{product.Pictures!.FirstOrDefault()?.FileName}";
-			Model = product.Model;
+			ProductName = product.ToString()!;
 			Price = product.Price;
 		}
 	}
@@ -40,7 +40,7 @@ namespace HamsterWorld.Models
 
 		public override string ToString()
 		{
-			return $"Процессор {Model} [Тактовая частота - {ClockRate}, Число ядер - {NumberOfCores}, Сокет - {Socket}]";
+			return $"{ProductName} [Тактовая частота - {ClockRate}, Число ядер - {NumberOfCores}, Сокет - {Socket}]";
 		}
 	}
 
@@ -58,7 +58,7 @@ namespace HamsterWorld.Models
 
 		public override string ToString()
 		{
-			return $"Видеокарта {Model} [Объём видеопамяти - {VRAM}, Тип памяти - {MemoryType}]";
+			return $"{ProductName} [Объём видеопамяти - {VRAM}, Тип памяти - {MemoryType}]";
 		}
 	}
 
@@ -76,7 +76,7 @@ namespace HamsterWorld.Models
 
 		public override string ToString()
 		{
-			return $"Оперативная память {Model} [Объём - {AmountOfMemory}, Тип памяти - {MemoryType}]";
+			return $"{ProductName} [Объём - {AmountOfMemory}, Тип памяти - {MemoryType}]";
 		}
 	}
 }

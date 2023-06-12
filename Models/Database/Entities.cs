@@ -123,6 +123,11 @@ namespace HamsterWorld.Models
 
       //Навигационные свойства
       public List<Assortment>? Assortments;
+
+      public override string ToString()
+      {
+         return $"Процессор {Model}";
+      }
    }
    public class GPU : Product
    {
@@ -131,6 +136,11 @@ namespace HamsterWorld.Models
 
       //Навигационные свойства
       public List<Assortment>? Assortments;
+
+      public override string ToString()
+      {
+         return $"Видеокарта {Model}";
+      }
    }
    public class RAM : Product
    {
@@ -139,6 +149,11 @@ namespace HamsterWorld.Models
 
       //Навигационные свойства
       public List<Assortment>? Assortments;
+
+      public override string ToString()
+      {
+         return $"Оперативная память {Model}";
+      }
    }
    public class ProductPicture
    {

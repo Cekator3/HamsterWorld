@@ -113,7 +113,7 @@ namespace HamsterWorld.Controllers
 
             ProductDetailsBindingModel model = new ProductDetailsBindingModel();
 
-            switch((byte)category)
+            switch((byte)category!)
             {
                 case (byte)Product.Categorys.CPU:
                     model.CpuDetails = new CPUDetails();

@@ -1,6 +1,6 @@
 @model ViewProductBindingModel
 @{
-   ViewData["Title"] = $"Купить {Model.GetTopName()}";
+   ViewData["Title"] = $"Купить {Model.GetProductTitle()}";
    List<string> pictureSources = Model.Product.Pictures
                                              !.OrderBy(e => e.OrderNumber)
                                              .Select(e => $"/Images/Products/{e.FileName}")
@@ -13,7 +13,7 @@
 }
 
 <div class="container">
-   <h1 class="text-center">@Model.GetTopName()</h1>
+   <h1 class="text-center">@Model.GetProductTitle()</h1>
    @if(pictureSources.Count != 0)
    {
       <div id="carouselExampleIndicators" class="carousel slide" data-bs-ride="carousel">
@@ -96,17 +96,46 @@
          <div class="col">
             <h3>Основные параметры</h3>
          </div>
-         @if(Model is ViewCpuBindingModel cpuVm)
+         @if(Model.Product is CPU cpu)
          {
-            @Html.DisplayFor(model => cpuVm)
+            <div class="col-12 d-flex justify-content-between">
+               <span>Тактовая частота</span>
+               <span>@cpu.ClockRate</span>
+            </div>
+
+            <div class="col-12 d-flex justify-content-between">
+               <span>Количество ядер</span>
+               <span>@cpu.NumberOfCores</span>
+            </div>
+
+            <div class="col-12 d-flex justify-content-between">
+               <span>Сокет</span>
+               <span>@cpu.Socket</span>
+            </div>
          }
-         else if(Model is ViewGpuBindingModel gpuVm)
+         else if(Model.Product is GPU gpu)
          {
-            @Html.DisplayFor(model => gpuVm)
+            <div class="col-12 d-flex justify-content-between">
+               <span>Тип видеопамяти</span>
+               <span>@gpu.MemoryType</span>
+            </div>
+
+            <div class="col-12 d-flex justify-content-between">
+               <span>Количество видеопамяти</span>
+               <span>@gpu.VRAM</span>
+            </div>
          }
-         else if(Model is ViewRamBindingModel ramVm)
+         else if(Model.Product is RAM ram)
          {
-            @Html.DisplayFor(model => ramVm)
+            <div class="col-12 d-flex justify-content-between">
+               <span>Тип памяти</span>
+               <span>@ram.MemoryType</span>
+            </div>
+
+            <div class="col-12 d-flex justify-content-between">
+               <span>Количество памяти</span>
+               <span>@ram.AmountOfMemory</span>
+            </div>
          }
       </div>
    </div>
