@@ -19,25 +19,10 @@ public class AdminUserController : Controller
     public async Task<IActionResult> ManageUsers(string search = "")
     {
         //Список ролей необходим для отображения их в представлении
-        UserInfoBindingModel.AllRoles = await _context.Roles.AsNoTracking()
-                                                        .Select(e => e.Name)
-                                                        .ToListAsync();
+        UserInfoBindingModel.AllRoles = await GetListOfRolesNames();
 
-        //Remove unecessary white-spaces 
-        search = search.Trim().ToLower();
-
-        //Первые 15 пользователей, соответствующие фильтру поиска
-        List<UserInfoBindingModel> users = await _context.Users.AsNoTracking()
-                                                                .Where(e => e.Login.ToLower().Contains(search) || e.Email.ToLower().Contains(search))
-                                                                .Select(e => new UserInfoBindingModel()
-                                                                {
-                                                                    Login = e.Login,
-                                                                    Email = e.Email,
-                                                                    Role = e.Role.Name
-                                                                })
-                                                                .Take(15)
-                                                                .OrderBy(e => e.Login)
-                                                                .ToListAsync();
+        int amountOfUsersToGet = 15;
+        List<UserInfoBindingModel> users = await GetUsersWhoMatchTheSearchFilter(search, amountOfUsersToGet);
         
         return View(users);
     }
@@ -63,7 +48,7 @@ public class AdminUserController : Controller
         user.Role = role;
 
         //Adding user to blacklist if he is not already there
-        if (await _context.Blacklist.FindAsync(user.Id) == null)
+        if (!(await _context.Blacklist.AnyAsync(blacklistUser => blacklistUser.UserId == user.Id)))
         {
             UserWithChangedRole usr = new UserWithChangedRole()
             {
@@ -80,5 +65,30 @@ public class AdminUserController : Controller
     public IActionResult Error()
     {
         return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+    }
+
+    async Task<List<string>> GetListOfRolesNames()
+    {
+        return await _context.Roles.AsNoTracking()
+                                    .Select(e => e.Name)
+                                    .ToListAsync();
+    }
+
+    async Task<List<UserInfoBindingModel>> GetUsersWhoMatchTheSearchFilter(string searchFilter, int amount)
+    {
+        string searchFilterLowered = searchFilter.Trim().ToLower();
+
+        return await _context.Users.AsNoTracking()
+                                    .Where(e => e.Login.ToLower().Contains(searchFilterLowered) || e.Email.ToLower().Contains(searchFilterLowered))
+                                    .Select(e => new UserInfoBindingModel()
+                                    {
+                                        Login = e.Login,
+                                        Email = e.Email,
+                                        Role = e.Role.Name
+                                    })
+                                    .Take(amount)
+                                    .OrderBy(e => e.Login)
+                                    .ToListAsync();
+
     }
 }
