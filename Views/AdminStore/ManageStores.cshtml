@@ -3,6 +3,7 @@
 @inject IConfiguration _config
 @model List<Store>
 @{
+    ViewBag.Title = "Филиалы";
     List<Point> coordinatesOfStores = Model.Select(e => e.Coordinates).ToList();
     string imageSrc = YandexStaticMapTools.GenerateSrcAttributeForMap(coordinatesOfStores, _config);
 }

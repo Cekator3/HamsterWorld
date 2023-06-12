@@ -34,40 +34,8 @@ public class AdminStoreController : Controller
 
     public IActionResult AddStore()
     {
-        return View();
-    }
-
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> AddStore(AddStoreBindingModel model)
-    {
-        if(IsWorkingScheduleTooShort(model.OpeningTime, model.ClosingTime))
-        {
-            ModelState.AddModelError(nameof(model.OpeningTime), "Рабочее время не может быть меньше четырёх часов");
-        }
-        if(!ModelState.IsValid)
-        {
-            return View(model);
-        }
-
-        (bool IsSuccess, string Message) = await TryAddNewStoreToDatabase(model);
-        if( !IsSuccess )
-        {
-            ModelState.AddModelError(nameof(model.Address), Message);
-        }
-        if(!ModelState.IsValid)
-        {
-            return View(model);
-        }
-
-        return Redirect("ManageStores");
-   }
-
-    public async Task<IActionResult> DeleteStore(short id)
-    {
-        await DbUsageTools.RemoveStoreFromDatabase(_context, id);
-
-        return RedirectToAction("ManageStores");
+        ManageStoreBindingModel model = new ManageStoreBindingModel();
+        return View("ManageStore", model);
     }
 
     public async Task<IActionResult> ChangeStoreInfo(short id)
@@ -79,72 +47,68 @@ public class AdminStoreController : Controller
             return NotFound("Такого филиала не существует");
         }
 
-        ChangeStoreInfoBindingModel model = new ChangeStoreInfoBindingModel()
-        {
-            Id = store.Id,
-            Name = store.Name,
-            OpeningTime = store.OpeningTime,
-            ClosingTime = store.ClosingTime,
-            Address = store.Address
-        };
-        return View(model);
+        ManageStoreBindingModel model = new ManageStoreBindingModel(store);
+        return View("ManageStore", model);
     }
 
     [HttpPost]
-    public async Task<IActionResult> ChangeStoreInfo(ChangeStoreInfoBindingModel model)
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ManageStore(ManageStoreBindingModel model)
     {
-        //Почти полный копипаст из AddStore
         if(IsWorkingScheduleTooShort(model.OpeningTime, model.ClosingTime))
         {
             ModelState.AddModelError(nameof(model.OpeningTime), "Рабочее время не может быть меньше четырёх часов");
         }
-
-        (bool IsSuccess, string Message) = await TryApplyChangesToStoreInfo(model);
-        if( !IsSuccess )
-        {
-            ModelState.AddModelError(nameof(model.Address), Message);
-        }
-
         if(!ModelState.IsValid)
         {
             return View(model);
         }
 
+        bool IsSuccess = false;
+        string Message = "";
+        if(model.StoreId != null)
+        {
+            (IsSuccess, Message) = await TryApplyChangesToStoreInfo(model);
+        }
+        else
+        {
+            (IsSuccess, Message) = await TryAddNewStoreToDatabase(model);
+        }
+
+        if(!IsSuccess)
+        {
+            ModelState.AddModelError(nameof(model.Address), Message);
+        }
+        if(!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        return Redirect("ManageStores");
+    }
+
+    public async Task<IActionResult> DeleteStore(short id)
+    {
+        await DbUsageTools.RemoveStoreFromDatabase(_context, id);
+
         return RedirectToAction("ManageStores");
     }
 
-    public async Task<IActionResult> ChangeStoreAdministrators(short storeId = 0)
+    public async Task<IActionResult> ChangeStoreAdministrators(short storeId)
     {
         if (storeId <= 0)
         {
             return NotFound("Магазина с таким Id не существует");
         }
 
-        //Obtaining list of all administrators of this store
-        List<User>? storeAdministrators = (await _context.Stores.AsNoTracking()
-                                                .Include(e => e.Administrators)
-                                                .Select(e => new { e.Id, e.Administrators })
-                                                .FirstOrDefaultAsync(e => e.Id == storeId))
-                                                ?.Administrators;
-        if(storeAdministrators == null)
+        List<int>? adminsIdentificators = await GetListOfIdsOfAllAdministratorsOfStore(storeId);
+        if(adminsIdentificators == null)
         {
             return NotFound("Магазина с таким Id не существует");
         }
 
-        //id list of store's admins
-        List<int> adminsIdentificators = storeAdministrators.Select(e => e.Id).ToList();
-
         //Creating view model
-        List<ChangeStoreAdministratorsBindingModel> allAdmins = await _context.Users.AsNoTracking()
-                                    .Where(e => e.RoleId == Role.STORE_ADMIN)
-                                    .Select(e => new ChangeStoreAdministratorsBindingModel()
-                                    {
-                                        AdminId = e.Id,
-                                        Login = e.Login,
-                                        Email = e.Email,
-                                        IsAdminOfThisStore = adminsIdentificators.Contains(e.Id)
-                                    })
-                                    .ToListAsync();
+        List<ChangeStoreAdministratorsBindingModel> allAdmins = await GetListOfChangeStoreAdministratorsBindingModel(adminsIdentificators);
 
         ViewBag.StoreId = storeId;
         return View(allAdmins);
@@ -193,6 +157,12 @@ public class AdminStoreController : Controller
         return Ok();
     }
 
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    public IActionResult Error()
+    {
+        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+    }
+
 
 
     bool IsWorkingScheduleTooShort(TimeOnly openingTime, TimeOnly closingTime)
@@ -210,7 +180,7 @@ public class AdminStoreController : Controller
         return Math.Abs(openingTime.Ticks - closingTime.Ticks) < minWorkingTime;
     }
 
-    async Task<(bool, string)> TryAddNewStoreToDatabase(AddStoreBindingModel model)
+    async Task<(bool, string)> TryAddNewStoreToDatabase(ManageStoreBindingModel model)
     {
         Store? store = await TryFindStoreInfoWithDadataService(model);
 
@@ -223,7 +193,41 @@ public class AdminStoreController : Controller
         return await DbUsageTools.TryAddStoreToDatabase(_context, store);
     }
 
-    async Task<Store?> TryFindStoreInfoWithDadataService(AddStoreBindingModel model)
+
+    async Task<(bool, string)> TryApplyChangesToStoreInfo(ManageStoreBindingModel model)
+    {
+        Store? oldStoreInfo = await _context.Stores.FindAsync(model.StoreId);
+        if (oldStoreInfo == null)
+        {
+            return (false, "Магазина с таким Id не существует");
+        }
+
+        Store? newStoreInfo = await TryFindStoreInfoWithDadataService(model);
+        if (newStoreInfo == null)
+        {
+            return (false, "Не удалось найти магазин по такому адресу");
+        }
+
+        //Проверяем, если новый адрес магазина соответствует адресам других магазинов
+        if(oldStoreInfo.Address != newStoreInfo.Address)
+        {
+            if (await _context.Stores.AsNoTracking().AnyAsync(e => e.Address == newStoreInfo.Address || e.Coordinates == newStoreInfo.Coordinates))
+            {
+                return (false, "Другой магазин с такими координатами или адресом уже существует");
+            }
+        }
+
+        oldStoreInfo.Name = newStoreInfo.Name;
+        oldStoreInfo.OpeningTime = newStoreInfo.OpeningTime;
+        oldStoreInfo.ClosingTime = newStoreInfo.ClosingTime;
+        oldStoreInfo.Address = newStoreInfo.Address;
+        oldStoreInfo.Coordinates = newStoreInfo.Coordinates;
+        await _context.SaveChangesAsync();
+
+        return (true, "");
+    }
+
+    async Task<Store?> TryFindStoreInfoWithDadataService(ManageStoreBindingModel model)
     {
         //Obtaining coordinates of store by dadata api
         Address storeInfo = await ObtainStoreInfoFromDadataApi(model.Address);
@@ -265,43 +269,28 @@ public class AdminStoreController : Controller
         return await api.Clean<Address>(address);
     }
 
-
-    async Task<(bool, string)> TryApplyChangesToStoreInfo(ChangeStoreInfoBindingModel model)
+    async Task<List<int>?> GetListOfIdsOfAllAdministratorsOfStore(int storeId)
     {
-        Store? oldStoreInfo = await _context.Stores.FindAsync(model.Id);
-        if (oldStoreInfo == null)
-        {
-            return (false, "Магазина с таким Id не существует");
-        }
-
-        Store? newStoreInfo = await TryFindStoreInfoWithDadataService(model);
-        if (newStoreInfo == null)
-        {
-            return (false, "Не удалось найти магазин по такому адресу");
-        }
-
-        //Проверяем, если новый адрес магазина соответствует адресам других магазинов
-        if(oldStoreInfo.Address != newStoreInfo.Address)
-        {
-            if (await _context.Stores.AsNoTracking().AnyAsync(e => e.Address == newStoreInfo.Address || e.Coordinates == newStoreInfo.Coordinates))
-            {
-                return (false, "Другой магазин с таким адресом уже существует");
-            }
-        }
-
-        oldStoreInfo.Name = newStoreInfo.Name;
-        oldStoreInfo.OpeningTime = newStoreInfo.OpeningTime;
-        oldStoreInfo.ClosingTime = newStoreInfo.ClosingTime;
-        oldStoreInfo.Address = newStoreInfo.Address;
-        oldStoreInfo.Coordinates = newStoreInfo.Coordinates;
-        await _context.SaveChangesAsync();
-
-        return (true, "");
+        return (await _context.Stores.AsNoTracking()
+                                    .Include(e => e.Administrators)
+                                    .Select(e => new { e.Id, e.Administrators })
+                                    .FirstOrDefaultAsync(e => e.Id == storeId))
+                                    ?.Administrators
+                                    ?.Select(e => e.Id)
+                                    .ToList();
     }
 
-    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-    public IActionResult Error()
+    async Task<List<ChangeStoreAdministratorsBindingModel>> GetListOfChangeStoreAdministratorsBindingModel(List<int> adminsIdentificators)
     {
-        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        return await _context.Users.AsNoTracking()
+                                    .Where(e => e.RoleId == Role.STORE_ADMIN)
+                                    .Select(e => new ChangeStoreAdministratorsBindingModel()
+                                    {
+                                        AdminId = e.Id,
+                                        Login = e.Login,
+                                        Email = e.Email,
+                                        IsAdminOfThisStore = adminsIdentificators.Contains(e.Id)
+                                    })
+                                    .ToListAsync();
     }
 }

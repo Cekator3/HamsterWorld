@@ -110,7 +110,7 @@ namespace HamsterWorld.Controllers
                 return NotFound("Товар с таким id не был обнаружен");
             }
 
-            ProductDetailsBindingModel model = GetProductDetailsBmFromProduct(product, storeId, (byte)category);
+            ProductDetailsBindingModel model = GetProductDetailsBindingModelFromProduct(product, storeId, (byte)category);
 
             return View("ManageProduct", model);
         }
@@ -404,7 +404,7 @@ namespace HamsterWorld.Controllers
             return int.Parse(userId);
         }
 
-        ProductDetailsBindingModel GetProductDetailsBmFromProduct(Product product, int storeId, byte category)
+        ProductDetailsBindingModel GetProductDetailsBindingModelFromProduct(Product product, int storeId, byte category)
         {
             ProductDetailsBindingModel model = null!;
 

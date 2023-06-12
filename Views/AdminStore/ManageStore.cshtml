@@ -1,11 +1,25 @@
-﻿@model AddStoreBindingModel
+﻿@model ManageStoreBindingModel
 @{
-    ViewBag.Title = "Новый филиал";
+    if(Model.Name == "")
+    {
+        ViewBag.Title = "Новый филиал";
+    }
+    else
+    {
+        ViewBag.Title = Model.Name;
+    }
 }
 
 <div class="container">
-    <form asp-action="AddStore" autocomplete="off">
+    @if(Model.StoreId != null)
+    {
+        <div class="row mb-3">
+            <a asp-action="ChangeStoreAdministrators" asp-route-storeId="@Model.StoreId" class="link-primary">Редактировать информацию о администраторах магазина</a>
+        </div>
+    }
+    <form asp-action="ManageStore" autocomplete="off">
         @Html.AntiForgeryToken()
+        <input type="hidden" readonly asp-for="StoreId">
         <div class="validation" asp-validation-summary="ModelOnly"></div>
         <div>
             <div class="form-group mb-2">
