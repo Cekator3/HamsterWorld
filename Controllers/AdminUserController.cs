@@ -48,7 +48,7 @@ public class AdminUserController : Controller
         user.Role = role;
 
         //Adding user to blacklist if he is not already there
-        if (!(await _context.Blacklist.AnyAsync(blacklistUser => blacklistUser.UserId == user.Id)))
+        if (!(await IsUserInBlacklist(user.Id)))
         {
             UserWithChangedRole usr = new UserWithChangedRole()
             {
@@ -89,6 +89,10 @@ public class AdminUserController : Controller
                                     .Take(amount)
                                     .OrderBy(e => e.Login)
                                     .ToListAsync();
+    }
 
+    async Task<bool> IsUserInBlacklist(int userId)
+    {
+        return await _context.Blacklist.AnyAsync(blacklistUser => blacklistUser.UserId == userId);
     }
 }
